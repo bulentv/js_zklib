@@ -26,30 +26,36 @@ module.exports = function(ZKLib) {
   ZKLib.prototype.LEVEL_ADMIN=14;
 
   ZKLib.prototype.encode_time = function(t) {
-    /*Encode a timestamp send at the timeclock
-    copied from zkemsdk.c - EncodeTime*/
-    var d = ( (t.getFullYear() % 100) * 12 * 31 + ((t.getMonth()) * 31) + t.getDate() - 1) *
-    (24 * 60 * 60) + (t.getHours() * 60 + t.getMinutes()) * 60 + t.getSeconds();
+
+
+    var d = ( (t.getFullYear() % 100) * 12 * 31 + ((t.getMonth()+1 - 1) * 31) + t.getDate() - 1) * (24 * 60 * 60) + (t.getHours() * 60 + t.getMinutes()) * 60 + t.getSeconds();
+
+    console.log(d);
     return d;
   };
 
   ZKLib.prototype.decode_time = function(t) {
-    /*Decode a timestamp retrieved from the timeclock
-    copied from zkemsdk.c - DecodeTime*/
+
     var second = t % 60;
-    t = t / 60;
+    t = Math.floor( t / 60);
+
     var minute = t % 60;
-    t = t / 60;
+    t = Math.floor( t / 60);
+
     var hour = t % 24;
-    t = t / 24;
+    t = Math.floor( t / 24);
+
     var day = t % 31+1;
-    t = t / 31;
+    t = Math.floor( t / 31);
+
     var month = t % 12+1;
-    t = t / 12;
+    t = Math.floor( t / 12);
+
     var year = Math.floor( t + 2000 );
-    var d = new Date( year, month-1, day, hour, minute, second);
-    //date("Y-m-d H:i:s", strtotime( $year.'-'.$month.'-'.$day.' '.$hour.':'.$minute.':'.$second) );
+
+    var d = new Date(year, month-1, day, hour, minute, second);
 
     return d;
+
   };
 }

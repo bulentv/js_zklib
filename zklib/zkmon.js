@@ -6,10 +6,10 @@ module.exports = function(ZKLib) {
 
   ZKLib.prototype.decodeAttLog = function(buf) {
 
-    var ret = {};
-    ret.id = parseInt(buf.slice(8,11).toString("ascii"));
-
-    ret.t = new Date( 2000 + buf[34], buf[35] - 1, buf[36], buf[37], buf[38], buf[39] );
+    var ret = {
+      userid: parseInt(buf.slice(8,11).toString("ascii")),
+      timestamp: (new Date( 2000 + buf[34], buf[35] - 1, buf[36], buf[37], buf[38], buf[39] )).getTime()
+    };
 
     return ret;
 
@@ -28,14 +28,14 @@ module.exports = function(ZKLib) {
     
     self.zkmonclient.once('message', function(ret) {
       
-      console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
+      //console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
 
       mon_session_id = ret.readUInt16LE(4);
       mon_reply_id = ret.readUInt16LE(6);
 
       self.zkmonclient.on('message', function(ret) {
 
-        console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
+        //console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
 
         mon_session_id = ret.readUInt16LE(4);
         mon_reply_id = ret.readUInt16LE(6);
@@ -64,7 +64,7 @@ module.exports = function(ZKLib) {
         }
 
         self.monenabled = true;
-        console.log(self.ip+":"+self.port+" c:"+buf.toString("hex"));
+        //console.log(self.ip+":"+self.port+" c:"+buf.toString("hex"));
 
         if(opts.start)
           opts.start(null,'monitoring started on device '+self.ip+":"+self.port);
@@ -98,7 +98,7 @@ module.exports = function(ZKLib) {
         self.monenabled = false;
         return console.log(err);
       }
-      console.log(self.ip+":"+self.port+" c:"+buf.toString("hex"));
+      //console.log(self.ip+":"+self.port+" c:"+buf.toString("hex"));
 
     });
   };

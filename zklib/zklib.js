@@ -24,6 +24,7 @@ require('./zkconnect')(ZKLib);
 require('./zkserialnumber')(ZKLib);
 require('./zkattendance')(ZKLib);
 require('./zkuser')(ZKLib);
+require('./zktime')(ZKLib);
 require('./zkmon')(ZKLib);
 
 ZKLib.prototype.createChkSum = function(p) {
@@ -82,6 +83,7 @@ ZKLib.prototype.createHeader = function(command, session_id, reply_id, command_s
   reply_id = (reply_id+1) % self.USHRT_MAX;
   buf.writeUInt16LE(reply_id,6);
 
+  console.log(buf.toString("hex"));
   return buf;
 
 };
@@ -147,10 +149,11 @@ ZKLib.prototype.checkValid = function(returnreply) {
 };
 
 ZKLib.prototype.cleanString = function(buf) {
+  var str = "";
   for(var i=0; i<buf.length; i++) {
-    if(buf[i] == 0)
-      buf = buf.slice(0,i);
+    if(buf[i] == 0) break;
+    str += String.fromCharCode(buf[i]);
   }
-  return buf.toString();
+  return str;
 };
 
