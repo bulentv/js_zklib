@@ -1,7 +1,15 @@
+var dgram = require('dgram');
+
 module.exports = function(ZKLib) {
   ZKLib.prototype.connect = function(cb) {
 
     var self = this;
+
+    if(self.zkclient == null) {
+      self.zkclient = dgram.createSocket('udp4');
+    }else{
+      return cb('socket must be closed first to execute this action');
+    }
 
     self.executeCmd( self.CMD_CONNECT, '', function( err, ret ) {
       if(cb)
@@ -11,13 +19,27 @@ module.exports = function(ZKLib) {
 
   };
 
-  ZKLib.prototype.disconnect = function(cb) {
+  ZKLib.prototype.destroy = function(cb) {
+    
+    var self = this;
+
+    self.zkclient.removeAllListeners();
+    self.zkclient.close();
+    self.zkclient = null;
+    if(cb)
+      cb(null, self.checkValid(self.data_recv));
+  };
+
+  ZKLib.prototype.disconnect = function(cb,force) {
 
     var self = this;
 
+    if(force){
+      return self.destroy(cb);
+    }
+
     self.executeCmd( self.CMD_EXIT, '', function( err, ret ) {
-      if(cb)
-        cb(null, self.checkValid(self.data_recv));
+      return self.destroy(cb);
     });
 
   };

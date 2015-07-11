@@ -42,23 +42,16 @@ module.exports = function(ZKLib) {
 
         var entry = buf.slice(i,i+39);
 
-        /*
-        $uid = hexdec( substr( $u[1], 0, 6 ) );
-        echo 'p'.bin2hex(substr( $attendancedata, 0, 39 ))." ". $uid."\n";
-        $uid = explode(chr(0), $uid);
-        $uid = intval( $uid[0] ); 
-        $id = intval( str_replace("\0", '', hex2bin( substr($u[1], 6, 8) ) ) );
-
-        */
-
         var att = {
-          //uid: (new Buffer([0,entry[0],entry[1],entry[2]])).readUInt32BE(0),
           userid: parseInt(entry.slice(3,7).toString("ascii").replace(/\u0000/g,'')),
           timestamp: (self.decode_time( entry.readUInt32LE(29) )).getTime()
         };
 
         if(opts.onatt)
           opts.onatt(null, att);
+
+
+
 
 
       }
@@ -71,12 +64,12 @@ module.exports = function(ZKLib) {
       }else{
         self.zkclient.once( "message", function(message, remote) {
           self.handleReply(message, remote)
+
+          if(opts.onend)
+            opts.onend();
+
         });
         
-        setTimeout( function() {
-        if(opts.onend)
-          opts.onend();
-        },1000);
       }
 
       

@@ -12,8 +12,8 @@ function ZKLib(ip, port) {
   this.data_recv = new Buffer([0,0,0,0,0,0,0,0]);
   this.session_id = 0;
 
-  this.zkclient = dgram.createSocket('udp4');
-  this.zkmonclient = dgram.createSocket('udp4');
+  this.zkclient = null;//dgram.createsocket('udp4');
+  //this.zkmonclient = null;//dgram.createSocket('udp4');
 
 }
 
@@ -83,7 +83,6 @@ ZKLib.prototype.createHeader = function(command, session_id, reply_id, command_s
   reply_id = (reply_id+1) % self.USHRT_MAX;
   buf.writeUInt16LE(reply_id,6);
 
-  console.log(buf.toString("hex"));
   return buf;
 
 };
@@ -128,7 +127,6 @@ ZKLib.prototype.executeCmd = function( command, command_string, cb ) {
   
   var buf = self.createHeader(command, self.session_id, self.reply_id, command_string);
 
-  //console.log("c:"+buf.toString("hex"));
   self.zkclient.send(buf, 0, buf.length, self.port, self.ip, function(err) {
     if(err)
       console.log(err);

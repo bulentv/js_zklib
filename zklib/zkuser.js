@@ -46,7 +46,6 @@ module.exports = function(ZKLib) {
   ZKLib.prototype.getUser = function (opts) {
     
     var self = this;
-    
     var leftover = new Buffer(0), attsize = 0, bytes=0, first=true;
 
     var str = "";
@@ -92,15 +91,13 @@ module.exports = function(ZKLib) {
       first = false;
       bytes += ret.length;
       
-      if(bytes < attsize) {
+      if(bytes < attsize-100) {
         self.zkclient.once( "message", onAttChunk );
       }else{
         self.zkclient.once( "message", self.handleReply );
 
-        setTimeout( function() {
         if(opts.onend)
           opts.onend();
-        },1000);
       }
     };
 

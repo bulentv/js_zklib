@@ -4,7 +4,6 @@ module.exports = function(ZKLib) {
     var self = this;
 
     self.zkclient.once('message', function(ret) {
-      //console.log(t);
       cb(null);
     });
     
@@ -34,7 +33,6 @@ module.exports = function(ZKLib) {
     var self = this;
 
     self.zkclient.once('message', function(ret) {
-      //console.log(ret.toString("hex"));
       var tn = ret.readUInt32LE(8);
       var t = self.decode_time(tn);
       cb(null,t);

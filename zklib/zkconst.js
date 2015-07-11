@@ -30,7 +30,6 @@ module.exports = function(ZKLib) {
 
     var d = ( (t.getFullYear() % 100) * 12 * 31 + ((t.getMonth()+1 - 1) * 31) + t.getDate() - 1) * (24 * 60 * 60) + (t.getHours() * 60 + t.getMinutes()) * 60 + t.getSeconds();
 
-    console.log(d);
     return d;
   };
 

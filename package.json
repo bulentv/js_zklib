@@ -1,6 +1,6 @@
 {
   "name": "zklib",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370",
   "main": "zklib/zklib.js",
   "scripts": {
@@ -23,7 +23,6 @@
     "url": "https://github.com/bulentv/js_zklib/issues"
   },
   "homepage": "https://github.com/bulentv/js_zklib#readme",
-  "readme": "# JS ZKLib #\n\nAttendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370\n\nBased on php_zklib (https://github.com/dnaextrim/php_zklib)\n",
   "readmeFilename": "README.md",
   "gitHead": "2bc26f603a96ed81b55fd1974bbac2786ff04ad3",
   "_id": "zklib@0.0.4",
