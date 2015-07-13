@@ -33,9 +33,13 @@ module.exports = function(ZKLib) {
     var self = this;
 
     self.zkclient.once('message', function(ret) {
-      var tn = ret.readUInt32LE(8);
-      var t = self.decode_time(tn);
-      cb(null,t);
+      try{
+        var tn = ret.readUInt32LE(8);
+        var t = self.decode_time(tn);
+        cb(null,t);
+      }catch(e) {
+        cb(e);
+      }
     });
 
     var buf = new Buffer(8);

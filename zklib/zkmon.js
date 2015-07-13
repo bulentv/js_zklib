@@ -20,7 +20,7 @@ module.exports = function(ZKLib) {
   ZKLib.prototype.startMon = function(opts) {
 
     var self = this;
-    
+
     self.connect( function(err) {
       
       //console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));

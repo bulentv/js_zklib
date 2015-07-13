@@ -1,19 +1,17 @@
 var dgram = require("dgram");
 
-function ZKLib(ip, port) {
+function ZKLib(opts) {
 
   var self = this;
 
-  this.ip = ip;
-  this.port = port;
+  this.ip = opts.ip;
+  this.port = opts.port;
+  this.inport = opts.inport;
   this.zkclient = null;
 
 
   this.data_recv = new Buffer([0,0,0,0,0,0,0,0]);
   this.session_id = 0;
-
-  this.zkclient = null;//dgram.createsocket('udp4');
-  //this.zkmonclient = null;//dgram.createSocket('udp4');
 
 }
 
@@ -122,6 +120,7 @@ ZKLib.prototype.executeCmd = function( command, command_string, cb ) {
   }
 
   self.zkclient.once("message", function(message, remote) {
+    console.log(remote.address+":"+remote.port+" "+message.toString("hex"));
     self.handleReply(message, remote,cb);
   });
   

@@ -7,15 +7,15 @@ module.exports = function(ZKLib) {
 
     if(self.zkclient == null) {
       self.zkclient = dgram.createSocket('udp4');
+      self.zkclient.bind(self.inport, function() {
+        self.executeCmd( self.CMD_CONNECT, '', function( err, ret ) {
+          if(cb)
+            cb(null, self.checkValid(self.data_recv));
+        });
+      });
     }else{
       return cb('socket must be closed first to execute this action');
     }
-
-    self.executeCmd( self.CMD_CONNECT, '', function( err, ret ) {
-      if(cb)
-        cb(null, self.checkValid(self.data_recv));
-    });
-
 
   };
 

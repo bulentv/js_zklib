@@ -73,6 +73,7 @@ module.exports = function(ZKLib) {
       for(var i=0; i<buf.length; i+=72) {
 
         var entry = buf.slice(i,i+72);
+        //console.log(entry.toString("hex"));
 
         var user = {
           uid: entry.readUInt16BE(0),
