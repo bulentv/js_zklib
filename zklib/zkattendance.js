@@ -1,110 +1,131 @@
+var dgram = require("dgram");
 module.exports = function(ZKLib) {
-  ZKLib.prototype.getSizeAttendance = function(buf) {
-    
+
+  ZKLib.prototype.getSizeAttendance = function() {
     var self = this;
 
-    var command = buf.readUInt16LE(0);
-
-    if ( command == self.CMD_PREPARE_DATA )
-      return buf.readUInt32LE(8);
-    else
+    var command = self.data_recv.readUInt16LE(0);
+    if ( command == self.CMD_PREPARE_DATA ) {
+      var size = self.data_recv.readUInt32LE(8);
+      return size;
+    } else {
       return false;
-  }
+    }
+  };
 
-  ZKLib.prototype.getAttendance = function(opts) {
 
+  ZKLib.prototype.decodeAttendanceData = function(attdata) {
     var self = this;
-    var leftover = new Buffer(0), attsize = 0, bytes=0, first=true;
-
-    var str = "";
-
-    var onAttChunk = function(ret) {
-
-      var n = self.getSizeAttendance(ret);
-
-      if(n) {
-        attsize = n;
-        return self.zkclient.once( "message", onAttChunk );
-      }
-      
-      var offs = first?10:8;
-
-      var newlosize = ( leftover.length + ( ret.length - offs ) ) % 40;
-      var buf = new Buffer( leftover.length + (ret.length - newlosize - offs )  );
-      leftover.copy( buf );
-      ret.copy( buf, leftover.length, offs, ret.length - newlosize);
-
-      leftover = new Buffer( newlosize );
-      ret.copy( leftover, 0, ret.length - newlosize, ret.length );
-
-
-      for(var i=0; i<buf.length; i+=40) {
-
-        var entry = buf.slice(i,i+39);
-
-        var att = {
-          userid: parseInt(entry.slice(3,7).toString("ascii").replace(/\u0000/g,'')),
-          timestamp: (self.decode_time( entry.readUInt32LE(29) )).getTime()
-        };
-
-        if(opts.onatt)
-          opts.onatt(null, att);
-
-
-
-
-
-      }
-
-      first = false;
-      bytes += ret.length;
-      
-      if(bytes < attsize) {
-        self.zkclient.once( "message", onAttChunk );
-      }else{
-        self.zkclient.once( "message", function(message, remote) {
-          self.handleReply(message, remote)
-
-          if(opts.onend)
-            opts.onend();
-
-        });
-        
-      }
-
-      
-
+    var att = {
+      uid: parseInt(attdata.slice(0,4).toString("ascii").split('\0').shift()) || 0,
+      id: parseInt(attdata.slice(4,8).toString("ascii").split('\0').shift()) || 0,
+      state: attdata[28],
+      timestamp: self.decode_time(attdata.readUInt32LE(29))
     };
-
-    self.zkclient.once( "message", onAttChunk );
-
-    var buf = new Buffer(8);
-    buf.writeUInt16LE( self.CMD_ATTLOG_RRQ,0);
-    buf.writeUInt16LE(0,2);
-    buf.writeUInt16LE(self.session_id,4);
-    buf.writeUInt16LE(self.reply_id,6);
-
-    var chksum = self.createChkSum(buf);
-    buf.writeUInt16LE(chksum,2);
-    self.reply_id = (self.reply_id+1) % self.USHRT_MAX;
-    buf.writeUInt16LE(self.reply_id,6);
-
-    self.zkclient.send(buf, 0, buf.length, self.port, self.ip, function(err) {
-
-      if(err) {
-        return console.log(err);
-      }
-    });
+    return att;
   };
 
-  ZKLib.prototype.clearAttendance = function(cb) {
 
+
+  ZKLib.prototype.getattendance = function(cb) {
     var self = this;
 
-    self.executeCmd( CMD_CLEAR_ATTLOG, "", function(err, ret) {
-      cb(null, self.data_recv.slice(8).toString())
+    var command = self.CMD_ATTLOG_RRQ;
+    var command_string = new Buffer([]);
+    var chksum = 0;
+    var session_id = self.session_id;
+    var reply_id = self.data_recv.readUInt16LE(6);
+
+    var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
+
+    self.socket = dgram.createSocket('udp4');
+    self.socket.bind(self.inport);
+
+    var state = self.STATE_FIRST_PACKET;
+    var total_bytes = 0;
+    var bytes_recv = 0;
+
+    var rem = null;
+    var offset = 0;
+
+    var attdata_size = 40;
+    var trim_first = 10;
+    var trim_others = 8;
+
+    var atts = [];
+
+    self.socket.on('message', function(reply, remote) {
+      switch(state) {
+
+        case self.STATE_FIRST_PACKET:
+
+          state = self.STATE_PACKET;
+
+          self.data_recv = reply;
+
+          if(reply && reply.length) {
+            self.session_id = reply.readUInt16LE(4);
+
+            total_bytes = self.getSizeAttendance();
+            if( total_bytes <= 0 ) {
+              self.socket.removeAllListeners('message');
+              self.socket.close();
+              self.socket = null;
+              cb("zero");
+            }
+
+          }else{
+            cb("zero length reply");
+          }
+
+          break;
+
+        case self.STATE_PACKET:
+
+
+          if(bytes_recv == 0) {
+            offset = trim_first;
+            bytes_recv = 4;
+          }else{
+            offset = trim_others;
+          }
+
+          while(reply.length-offset >= attdata_size) {
+            var attdata = new Buffer(attdata_size);
+            if(rem && rem.length > 0) {
+              rem.copy(attdata);
+              reply.copy(attdata,rem.length,offset);
+              offset += attdata_size - rem.length;
+              rem = null;
+            }else{
+              reply.copy(attdata,0,offset);
+              offset += attdata_size;
+            }
+
+            var att = self.decodeAttendanceData(attdata);
+            atts.push(att);
+
+            bytes_recv += attdata_size;
+            if(bytes_recv == total_bytes) {
+              state = self.STATE_FINISHED;
+            }
+
+          }
+
+          rem = new Buffer(reply.length - offset);
+          reply.copy(rem,0,offset);
+
+          break;
+
+        case self.STATE_FINISHED:
+          self.socket.removeAllListeners('message');
+          self.socket.close();
+          cb(null,atts);
+          break;
+
+      }
     });
 
-  };
-  
+    self.socket.send(buf, 0, buf.length, self.port, self.ip);
+  }
 };

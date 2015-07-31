@@ -2,10 +2,6 @@ var dgram = require('dgram');
 
 module.exports = function(ZKLib) {
 
-  ZKLib.prototype.zkclient = null;
-
-  ZKLib.prototype.monenabled = false;
-
   ZKLib.prototype.decodeAttLog = function(buf) {
 
     var ret = {
@@ -25,7 +21,7 @@ module.exports = function(ZKLib) {
       
       //console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
 
-      self.zkclient.on('message', function(ret) {
+      self.socket.on('message', function(ret) {
 
         //console.log(self.ip+":"+self.port+" s:"+ret.toString("hex"));
 
@@ -48,7 +44,7 @@ module.exports = function(ZKLib) {
       self.reply_id = (self.reply_id+1) % self.USHRT_MAX;
       buf.writeUInt16LE(self.reply_id,6);
 
-      self.zkclient.send(buf, 0, buf.length, self.port, self.ip, function(err) {
+      self.socket.send(buf, 0, buf.length, self.port, self.ip, function(err) {
 
         if(err) {
           return console.log(err);

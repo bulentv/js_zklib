@@ -1,59 +1,30 @@
+var dgram = require('dgram');
+
 module.exports = function(ZKLib) {
-  ZKLib.prototype.setTime = function(t,cb) {
 
+  ZKLib.prototype.gettime = function(cb) {
     var self = this;
 
-    self.zkclient.once('message', function(ret) {
-      cb(null);
+    return this._executeCmd( this.CMD_GET_TIME, '', function(err,ret) {
+      if(err || !ret || ret.length <= 8)
+        return cb(err);
+
+      return cb(null, self.decode_time(ret.readUInt32LE(8)));
     });
-    
-    var tn = self.encode_time(t);
-
-    var buf = new Buffer(12);
-    buf.writeUInt16LE(self.CMD_SET_TIME,0);
-    buf.writeUInt16LE(0,2);
-    buf.writeUInt16LE(self.session_id,4);
-    buf.writeUInt16LE(self.reply_id,6);
-    buf.writeUInt32LE(tn,8);
-
-    var chksum = self.createChkSum(buf);
-    buf.writeUInt16LE(chksum,2);
-    self.reply_id = (self.reply_id+1) % self.USHRT_MAX;
-    buf.writeUInt16LE(self.reply_id,6);
-
-    self.zkclient.send(buf, 0, buf.length, self.port, self.ip, function(err) {
-    });
-
-
-
   };
 
-  ZKLib.prototype.getTime = function(cb) {
-
+  ZKLib.prototype.settime = function(t,cb) {
     var self = this;
 
-    self.zkclient.once('message', function(ret) {
-      try{
-        var tn = ret.readUInt32LE(8);
-        var t = self.decode_time(tn);
-        cb(null,t);
-      }catch(e) {
-        cb(e);
-      }
-    });
+    var command_string = new Buffer(4);
+    command_string.writeUInt32LE(self.encode_time(t), 0);
 
-    var buf = new Buffer(8);
-    buf.writeUInt16LE(self.CMD_GET_TIME,0);
-    buf.writeUInt16LE(0,2);
-    buf.writeUInt16LE(self.session_id,4);
-    buf.writeUInt16LE(self.reply_id,6);
+    return this._executeCmd( this.CMD_SET_TIME, command_string, function(err,ret) {
+      if(err || !ret || ret.length <= 8)
+        return cb(err);
 
-    var chksum = self.createChkSum(buf);
-    buf.writeUInt16LE(chksum,2);
-    self.reply_id = (self.reply_id+1) % self.USHRT_MAX;
-    buf.writeUInt16LE(self.reply_id,6);
-
-    self.zkclient.send(buf, 0, buf.length, self.port, self.ip, function(err) {
+      return cb(!self.checkValid(ret), ret);
     });
   };
+
 }

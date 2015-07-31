@@ -1,46 +1,54 @@
 var ZKLib = require('./zklib/zklib');
+var async = require('async');
 
 
-var zk = new ZKLib("10.22.150.51",4370);
+var zk = new ZKLib({
+  ip:"10.22.150.51",
+  port:4370,
+  inport:5200
+});
 
-zk.connect( function() {
-  zk.getTime( function(err,t) {
-    console.log(t);
-    zk.disconnect( function() {
-
-    });
-    /*
-    var t = new Date();
-    zk.setTime( t,function() {
-      zk.getTime( function() {
+async.series(
+  [
+    function(cb) {
+      zk.connect(function(err,ret) {
+        cb(err,ret);
       });
-    });
-    */
-  });
-  /*
-  zk.getUser( {
-    onuser:function(err,user) {
-      if(err)
-        return console.log("error:",err);
-
-      console.log(user);
     },
-    onend:function() {
-      zk.getAttendance( {
-        onatt:function(err,att) {
-          if(err)
-            return console.log("error:",err);
-
-          console.log(att);
-        },
-        onend: function() {
-          zk.disconnect();
-          console.log("finished");
-        }
+    function(cb,err,ret) {
+      zk.serialNumber( function(err, ret) {
+        console.log(err,ret);
+        cb(err,ret);
+      });
+    },
+    function(cb,err,ret) {
+      zk.version( function(err, ret) {
+        console.log(err,ret);
+        cb(err,ret);
+      });
+    },
+    function(cb,err,ret) {
+      zk.gettime( function(err, ret) {
+        console.log(err,ret);
+        cb(err,ret);
+      });
+    },
+    function(cb,err,ret) {
+      zk.getattendance( function(err, ret) {
+        console.log(err,ret);
+        cb();
+      });
+    },
+    function(cb,err,ret) {
+      zk.getuser( function(err, ret) {
+        console.log(err,ret);
+        cb(err,ret);
       });
     }
-  });
-  */
-});
+  ],
+  function(err) {
+    console.log("done!");
+  }
+);
 
 
