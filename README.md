@@ -34,15 +34,15 @@ Install with:
 - disconnect() -> Disconnect connection with machine.
 - serialNumber(callback) -> Get serial number machine.
 - version(callback) -> Get version of machine.
-- getattendance(callback) -> Get attendance data.
-- gettime(callback) -> Get time of machine.
-- settime(value, callback) -> Set time in machine.
-- getuser(callback) -> Get all user in machine.
+- getAttendance(callback) -> Get attendance data.
+- getTime(callback) -> Get time of machine.
+- setTime(value, callback) -> Set time in machine.
+- getUser(callback) -> Get all user in machine.
 
 ## Handle Callback
 
 ```js
-Zk.getTime(function(err, time) {
+ZK.getTime(function(err, time) {
   if (err) throw err;
   console.log("Device clock's time is " + time.toString());
 })
