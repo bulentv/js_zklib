@@ -27,7 +27,7 @@ module.exports = function(ZKLib) {
 
 
 
-  ZKLib.prototype.getattendance = function(cb) {
+  ZKLib.prototype.getAttendance = function(cb) {
     var self = this;
 
     var command = self.CMD_ATTLOG_RRQ;
