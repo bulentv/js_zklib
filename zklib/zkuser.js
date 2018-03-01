@@ -136,14 +136,43 @@ c:PP.}P.,5v3.,.4,.TEST USES 402.uc~.6/.w.M[.402.
         return False;
       }
   }
-
-
-
-
-
-
-
 i*/
+  ZKLib.prototype.setuser = function(uid, password='', name = '', user_id = '', cb) {
+      var self = this;
+
+      var command = self.CMD_USER_WRQ;
+      var command_string = new Buffer(72);
+      command_string.writeUInt16LE(uid,0);
+      command_string[2] = 0;
+      command_string.write(password,3,11);
+      command_string.write(name,11,39);
+      command_string[39] = 1;
+      command_string.writeUInt32LE(0,40);
+      command_string.write(user_id.toString(10),48)
+      
+      var chksum = 0;
+      var session_id = self.session_id;
+      var reply_id = self.data_recv.readUInt16LE(6);
+
+      var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
+      self.socket = dgram.createSocket('udp4');
+      self.socket.bind(self.inport);
+
+      self.socket.once('message', function(reply, remote) {
+        self.socket.close();
+        self.data_recv = reply;
+
+        if (reply && reply.length) {
+          self.session_id = reply.readUInt16LE(4);
+          cb(!self.checkValid(reply), reply);
+        }
+        else {
+          ch("Zero Length Reply");
+        }
+      });
+
+      self.socket.send(buf, 0, buf.length, self.port, self.ip);
+  };
 
   ZKLib.prototype.enrolluser = function(id, cb) {
     var self = this;
@@ -192,8 +221,6 @@ i*/
     self.socket = dgram.createSocket('udp4');
     self.socket.bind(self.inport);
 
-
-    
     var state = self.STATE_FIRST_PACKET;
     var total_bytes = 0;
     var bytes_recv = 0;
