@@ -51,6 +51,7 @@ ZK.getTime(function(err, time) {
 ## Contributor
 - Bulent Vural https://github.com/bulentv
 - Shodiqul Muzaki https://github.com/creativefull
+- shubhamoy https://github.com/shubhamoy
 
 ## How to Contribute
 - open a pull request
