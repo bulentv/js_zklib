@@ -3,7 +3,7 @@ var async = require('async');
 
 
 var zk = new ZKLib({
-  ip:"10.22.150.51",
+  ip:"192.168.2.2",
   port:4370,
   inport:5200
 });
@@ -36,6 +36,12 @@ async.series(
     function(cb,err,ret) {
       zk.getattendance( function(err, ret) {
         console.log(err,ret);
+        cb();
+      });
+    },
+    function(cb, err, ret) {
+      zk.enrolluser('50', function(err, ret) {
+        console.log(err, ret);
         cb();
       });
     },
