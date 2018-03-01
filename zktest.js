@@ -3,7 +3,7 @@ var async = require('async');
 
 
 var zk = new ZKLib({
-  ip:"192.168.2.2",
+  ip:"192.168.1.201",
   port:4370,
   inport:5200
 });
@@ -15,6 +15,7 @@ async.series(
         cb(err,ret);
       });
     },
+    
     function(cb,err,ret) {
       zk.serialNumber( function(err, ret) {
         console.log(err,ret);
@@ -39,16 +40,22 @@ async.series(
         cb();
       });
     },
-    function(cb, err, ret) {
-      zk.enrolluser('50', function(err, ret) {
-        console.log(err, ret);
-        cb();
-      });
-    },
     function(cb,err,ret) {
       zk.getuser( function(err, ret) {
         console.log(err,ret);
         cb(err,ret);
+      });
+    },
+    function(cb, err, ret) {
+      zk.enrolluser('56', function(err, ret) {
+        console.log(err, ret);
+        cb();
+      });
+    },
+    function(cb, err, ret) {
+      zk.setuser(56, '', 'Leh Sun', '56', function(err, ret) {
+        console.log(err, ret);
+        cb();
       });
     }
   ],
