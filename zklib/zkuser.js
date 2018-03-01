@@ -145,15 +145,37 @@ c:PP.}P.,5v3.,.4,.TEST USES 402.uc~.6/.w.M[.402.
 
 i*/
 
+  ZKLib.prototype.enrolluser = function(id, cb) {
+    var self = this;
 
+    var command = self.CMD_START_ENROLL;
+    var command_string = new Buffer(2);
+    command_string.write(id);
+    var chksum = 0;
+    var session_id = self.session_id;
 
+    var reply_id = self.data_recv.readUInt16LE(6);
 
+    var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
+    
+    self.socket = dgram.createSocket('udp4');
+    self.socket.bind(self.inport);
 
+    self.socket.once('message', function(reply, remote) {
+      self.socket.close();
+      
+      self.data_recv = reply;
 
+      if(reply && reply.length) {
+        self.session_id = reply.readUInt16LE(4);
+        cb(!self.checkValid(reply), reply);//self.decode_time(reply.readUInt32LE(8)));
+      }else{
+        cb("zero length reply");
+      }
+    });
 
-
-
-
+    self.socket.send(buf, 0, buf.length, self.port, self.ip);
+  };
 
 
   ZKLib.prototype.getuser = function(cb) {
