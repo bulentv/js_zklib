@@ -117,6 +117,7 @@ ZKLib.prototype._initConsts = function() {
   self.CMD_SET_USER = 8;
   self.LEVEL_USER = 0;
   self.LEVEL_ADMIN = 14;
+  self.CMD_START_ENROLL = 61;
 
   self.STATE_FIRST_PACKET = 1;
   self.STATE_PACKET = 2;
