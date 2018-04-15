@@ -54,6 +54,7 @@ ZK.gettime(function(err, time) {
 * Bulent Vural https://github.com/bulentv
 * Shodiqul Muzaki https://github.com/creativefull
 * shubhamoy https://github.com/shubhamoy
+* mribichich https://github.com/mribichich
 
 ## How to Contribute
 
