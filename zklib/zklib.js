@@ -1,4 +1,4 @@
-var dgram = require("dgram");
+var dgram = require('dgram');
 
 function ZKLib(options) {
   var self = this;
@@ -6,7 +6,6 @@ function ZKLib(options) {
   self.ip = options.ip;
   self.port = options.port;
   self.inport = options.inport;
-
 
   self.socket = null;
 
@@ -16,10 +15,10 @@ function ZKLib(options) {
   self.session_id = 0;
 }
 
-ZKLib.prototype._executeCmd = function(command, command_string,cb) {
+ZKLib.prototype._executeCmd = function(command, command_string, cb) {
   var self = this;
 
-  if( command == self.CMD_CONNECT ) {
+  if (command == self.CMD_CONNECT) {
     self.reply_id = -1 + self.USHRT_MAX;
   }
 
@@ -33,25 +32,23 @@ ZKLib.prototype._executeCmd = function(command, command_string,cb) {
 
     self.data_recv = reply;
 
-    if(reply && reply.length) {
+    if (reply && reply.length) {
       self.session_id = reply.readUInt16LE(4);
       self.reply_id = reply.readUInt16LE(6);
-      cb(!self.checkValid(reply), reply);
-    }else{
-      cb("zero length reply");
+      cb && cb(!self.checkValid(reply), reply);
+    } else {
+      cb && cb('zero length reply');
     }
   });
 
   self.socket.send(buf, 0, buf.length, self.port, self.ip);
-
 };
 
 ZKLib.prototype.createHeader = function(command, chksum, session_id, reply_id, command_string) {
-
   var self = this;
 
   var buf_command_string = new Buffer(command_string);
-  var buf = new Buffer( 8 + buf_command_string.length );
+  var buf = new Buffer(8 + buf_command_string.length);
 
   buf.writeUInt16LE(command, 0);
   buf.writeUInt16LE(chksum, 2);
@@ -67,19 +64,17 @@ ZKLib.prototype.createHeader = function(command, chksum, session_id, reply_id, c
   buf.writeUInt16LE(reply_id, 6);
 
   return buf;
-
 };
-
 
 ZKLib.prototype.createChkSum = function(p) {
   var self = this;
 
   var chksum = 0;
 
-  for(var i=0; i<p.length; i+=2) {
-    if(i==p.length-1) {
+  for (var i = 0; i < p.length; i += 2) {
+    if (i == p.length - 1) {
       chksum += p[i];
-    }else{
+    } else {
       chksum += p.readUInt16LE(i);
     }
     chksum %= self.USHRT_MAX;
@@ -88,7 +83,6 @@ ZKLib.prototype.createChkSum = function(p) {
   chksum = self.USHRT_MAX - chksum - 1;
 
   return chksum;
-
 };
 
 ZKLib.prototype._initConsts = function() {
@@ -130,38 +124,40 @@ ZKLib.prototype.checkValid = function(reply) {
 
   var command = reply.readUInt16LE(0);
 
-  return (command == self.CMD_ACK_OK);
+  return command == self.CMD_ACK_OK;
 };
 
 ZKLib.prototype.encode_time = function(t) {
-  var d = ( (t.getFullYear() % 100) * 12 * 31 + ((t.getMonth()) * 31) + t.getDate() - 1) *
-  (24 * 60 * 60) + (t.getHours() * 60 + t.getMinutes()) * 60 + t.getSeconds();
+  var d =
+    ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
+    (t.getHours() * 60 + t.getMinutes()) * 60 +
+    t.getSeconds();
 
   return d;
 };
 
 ZKLib.prototype.decode_time = function(t) {
   var second = t % 60;
-  t = (t-second) / 60;
+  t = (t - second) / 60;
 
   var minute = t % 60;
-  t = (t-minute) / 60;
+  t = (t - minute) / 60;
 
   var hour = t % 24;
-  t = (t-hour) / 24;
+  t = (t - hour) / 24;
 
-  var day = t % 31+1;
-  t = (t-(day-1)) / 31;
+  var day = t % 31 + 1;
+  t = (t - (day - 1)) / 31;
 
   var month = t % 12;
-  t = (t-month) / 12;
+  t = (t - month) / 12;
 
   var year = t + 2000;
 
-  var d = new Date( year, month, day, hour, minute, second );
+  var d = new Date(year, month, day, hour, minute, second);
 
   return d;
-}
+};
 
 module.exports = ZKLib;
 
@@ -172,4 +168,3 @@ require('./zktime')(ZKLib);
 require('./zkattendance')(ZKLib);
 require('./zkuser')(ZKLib);
 require('./zkmon')(ZKLib);
-  
