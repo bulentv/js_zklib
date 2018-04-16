@@ -1,11 +1,11 @@
-var dgram = require("dgram");
-module.exports = function(ZKLib) {
+var dgram = require('dgram');
 
+module.exports = function(ZKLib) {
   ZKLib.prototype.getSizeAttendance = function() {
     var self = this;
 
     var command = self.data_recv.readUInt16LE(0);
-    if ( command == self.CMD_PREPARE_DATA ) {
+    if (command == self.CMD_PREPARE_DATA) {
       var size = self.data_recv.readUInt32LE(8);
       return size;
     } else {
@@ -13,19 +13,30 @@ module.exports = function(ZKLib) {
     }
   };
 
-
   ZKLib.prototype.decodeAttendanceData = function(attdata) {
     var self = this;
     var att = {
-      uid: parseInt(attdata.slice(0,4).toString("ascii").split('\0').shift()) || 0,
-      id: parseInt(attdata.slice(4,8).toString("ascii").split('\0').shift()) || 0,
+      uid:
+        parseInt(
+          attdata
+            .slice(0, 4)
+            .toString('ascii')
+            .split('\0')
+            .shift()
+        ) || 0,
+      id:
+        parseInt(
+          attdata
+            .slice(4, 8)
+            .toString('ascii')
+            .split('\0')
+            .shift()
+        ) || 0,
       state: attdata[28],
       timestamp: self.decode_time(attdata.readUInt32LE(29))
     };
     return att;
   };
-
-
 
   ZKLib.prototype.getattendance = function(cb) {
     var self = this;
@@ -45,7 +56,7 @@ module.exports = function(ZKLib) {
     var total_bytes = 0;
     var bytes_recv = 0;
 
-    var rem = null;
+    var rem = [];
     var offset = 0;
 
     var attdata_size = 40;
@@ -55,50 +66,46 @@ module.exports = function(ZKLib) {
     var atts = [];
 
     self.socket.on('message', function(reply, remote) {
-      switch(state) {
-
+      switch (state) {
         case self.STATE_FIRST_PACKET:
-
           state = self.STATE_PACKET;
 
           self.data_recv = reply;
 
-          if(reply && reply.length) {
+          if (reply && reply.length) {
             self.session_id = reply.readUInt16LE(4);
 
             total_bytes = self.getSizeAttendance();
-            if( total_bytes <= 0 ) {
+            if (total_bytes <= 0) {
               self.socket.removeAllListeners('message');
               self.socket.close();
               self.socket = null;
-              cb("zero");
+              cb('zero');
             }
-
-          }else{
-            cb("zero length reply");
+          } else {
+            cb('zero length reply');
           }
 
           break;
 
         case self.STATE_PACKET:
-
-
-          if(bytes_recv == 0) {
+          if (bytes_recv == 0) {
             offset = trim_first;
             bytes_recv = 4;
-          }else{
+          } else {
             offset = trim_others;
           }
 
-          while(reply.length-offset >= attdata_size) {
+          while (reply.length + rem.length - offset >= attdata_size) {
             var attdata = new Buffer(attdata_size);
-            if(rem && rem.length > 0) {
+
+            if (rem.length > 0) {
               rem.copy(attdata);
-              reply.copy(attdata,rem.length,offset);
+              reply.copy(attdata, rem.length, offset);
               offset += attdata_size - rem.length;
-              rem = null;
-            }else{
-              reply.copy(attdata,0,offset);
+              rem = [];
+            } else {
+              reply.copy(attdata, 0, offset);
               offset += attdata_size;
             }
 
@@ -106,26 +113,24 @@ module.exports = function(ZKLib) {
             atts.push(att);
 
             bytes_recv += attdata_size;
-            if(bytes_recv == total_bytes) {
+            if (bytes_recv == total_bytes) {
               state = self.STATE_FINISHED;
             }
-
           }
 
           rem = new Buffer(reply.length - offset);
-          reply.copy(rem,0,offset);
+          reply.copy(rem, 0, offset);
 
           break;
 
         case self.STATE_FINISHED:
           self.socket.removeAllListeners('message');
           self.socket.close();
-          cb(null,atts);
+          cb(null, atts);
           break;
-
       }
     });
 
     self.socket.send(buf, 0, buf.length, self.port, self.ip);
-  }
+  };
 };
