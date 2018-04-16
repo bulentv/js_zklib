@@ -96,13 +96,13 @@ module.exports = function(ZKLib) {
             offset = trim_others;
           }
 
-          while (reply.length - offset >= attdata_size) {
+          while (reply.length + rem.length - offset >= attdata_size) {
             var attdata = new Buffer(attdata_size);
-            if (rem && rem.length > 0) {
+            if (rem.length > 0) {
               rem.copy(attdata);
               reply.copy(attdata, rem.length, offset);
               offset += attdata_size - rem.length;
-              rem = null;
+              rem = [];
             } else {
               reply.copy(attdata, 0, offset);
               offset += attdata_size;
@@ -140,5 +140,4 @@ module.exports = function(ZKLib) {
       return cb(null);
     });
   };
-
 };
