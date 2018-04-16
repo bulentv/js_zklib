@@ -1,4 +1,5 @@
 var dgram = require('dgram');
+
 module.exports = function(ZKLib) {
   ZKLib.prototype.getSizeAttendance = function() {
     var self = this;
@@ -55,7 +56,7 @@ module.exports = function(ZKLib) {
     var total_bytes = 0;
     var bytes_recv = 0;
 
-    var rem = null;
+    var rem = [];
     var offset = 0;
 
     var attdata_size = 40;
@@ -139,4 +140,5 @@ module.exports = function(ZKLib) {
       return cb(null);
     });
   };
+
 };
