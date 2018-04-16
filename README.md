@@ -49,7 +49,7 @@ ZK.gettime(function(err, time) {
 });
 ```
 
-## Contributor
+## Contributors
 
 * Bulent Vural https://github.com/bulentv
 * Shodiqul Muzaki https://github.com/creativefull
@@ -58,7 +58,7 @@ ZK.gettime(function(err, time) {
 
 ## How to Contribute
 
-* open a pull request
+* Open a pull request
 
 ## Credits
 
