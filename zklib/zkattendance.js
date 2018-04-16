@@ -96,14 +96,13 @@ module.exports = function(ZKLib) {
             offset = trim_others;
           }
 
-          while (reply.length + rem.length - offset >= attdata_size) {
+          while (reply.length - offset >= attdata_size) {
             var attdata = new Buffer(attdata_size);
-
-            if (rem.length > 0) {
+            if (rem && rem.length > 0) {
               rem.copy(attdata);
               reply.copy(attdata, rem.length, offset);
               offset += attdata_size - rem.length;
-              rem = [];
+              rem = null;
             } else {
               reply.copy(attdata, 0, offset);
               offset += attdata_size;
@@ -133,4 +132,13 @@ module.exports = function(ZKLib) {
 
     self.socket.send(buf, 0, buf.length, self.port, self.ip);
   };
+
+  ZKLib.prototype.clearAttendanceLog = function(cb) {
+    return this._executeCmd(this.CMD_CLEAR_ATTLOG, '', function(err, ret) {
+      if (err || !ret || ret.length <= 8) return cb(err);
+
+      return cb(null);
+    });
+  };
+
 };
