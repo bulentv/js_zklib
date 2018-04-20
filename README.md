@@ -66,6 +66,11 @@ ZK.getTime(function(err, time) {
 
 * Open a pull request
 
+
+## Notes about versions
+v0.1.x - Supported nodejs version: >= 0.10.48
+v0.2.x - Supported nodejs version: >= 7.5.0 
+
 ## Credits
 
 Based on php_zklib (https://github.com/dnaextrim/php_zklib)
