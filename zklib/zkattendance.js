@@ -47,7 +47,7 @@ module.exports = class {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    const state = this.STATE_FIRST_PACKET;
+    const state = this.States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
 
@@ -62,8 +62,8 @@ module.exports = class {
 
     this.socket.on('message', (reply, remote) => {
       switch (state) {
-        case this.STATE_FIRST_PACKET:
-          state = this.STATE_PACKET;
+        case this.States.FIRST_PACKET:
+          state = this.States.PACKET;
           this.data_recv = reply;
 
           if (reply && reply.length) {
