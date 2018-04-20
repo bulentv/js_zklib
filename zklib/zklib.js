@@ -2,10 +2,13 @@ var dgram = require('dgram');
 
 function ZKLib(options) {
   var self = this;
+
   self._initConsts();
+
   self.ip = options.ip;
   self.port = options.port;
   self.inport = options.inport;
+  self.timeout = options.timeout;
 
   self.socket = null;
 
@@ -27,8 +30,12 @@ ZKLib.prototype._executeCmd = function(command, command_string, cb) {
   self.socket = dgram.createSocket('udp4');
   self.socket.bind(self.inport);
 
+  var timeout;
+
   self.socket.once('message', function(reply, remote) {
     self.socket.close();
+
+    timeout && clearTimeout(timeout);
 
     self.data_recv = reply;
 
@@ -41,7 +48,20 @@ ZKLib.prototype._executeCmd = function(command, command_string, cb) {
     }
   });
 
-  self.socket.send(buf, 0, buf.length, self.port, self.ip);
+  self.socket.send(buf, 0, buf.length, self.port, self.ip, function(err) {
+    if (err) {
+      cb && cb(err);
+      return;
+    }
+
+    if (self.timeout) {
+      timeout = setTimeout(function() {
+        self.socket.close();
+
+        cb && cb(new Error('Timeout error'));
+      }, self.timeout);
+    }
+  });
 };
 
 ZKLib.prototype.createHeader = function(command, chksum, session_id, reply_id, command_string) {
