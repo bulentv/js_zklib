@@ -1,6 +1,6 @@
 {
   "name": "zklib",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370",
   "main": "zklib/zklib.js",
   "scripts": {
@@ -47,6 +47,6 @@
   "directories": {},
   "_resolved": "https://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz",
   "dependencies": {
-    "async": "^1.4.0"
+    "async": "^2.6.0"
   }
 }

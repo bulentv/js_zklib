@@ -1,65 +1,64 @@
-var ZKLib = require('./zklib/zklib');
-var async = require('async');
+const ZKLib = require('./zklib/zklib');
+const async = require('async');
 
+const ip = '192.168.1.201';
+const port = 4370;
+const inport = 5200;
 
-var zk = new ZKLib({
-  ip:"192.168.1.201",
-  port:4370,
-  inport:5200
-});
+const zk = new ZKLib({ip, port, inport});
 
 async.series(
   [
-    function(cb) {
-      zk.connect(function(err,ret) {
-        cb(err,ret);
+    (next) => {
+      zk.connect((err,ret) => {
+        next(err, ret);
       });
     },
     
-    function(cb,err,ret) {
-      zk.serialNumber( function(err, ret) {
-        console.log(err,ret);
-        cb(err,ret);
-      });
-    },
-    function(cb,err,ret) {
-      zk.version( function(err, ret) {
-        console.log(err,ret);
-        cb(err,ret);
-      });
-    },
-    function(cb,err,ret) {
-      zk.gettime( function(err, ret) {
-        console.log(err,ret);
-        cb(err,ret);
-      });
-    },
-    function(cb,err,ret) {
-      zk.getattendance( function(err, ret) {
-        console.log(err,ret);
-        cb();
-      });
-    },
-    function(cb,err,ret) {
-      zk.getuser( function(err, ret) {
-        console.log(err,ret);
-        cb(err,ret);
-      });
-    },
-    function(cb, err, ret) {
-      zk.enrolluser('56', function(err, ret) {
+    (next, err, ret) => {
+      zk.serialNumber((err, ret) => {
         console.log(err, ret);
-        cb();
+        next(err, ret);
       });
     },
-    function(cb, err, ret) {
-      zk.setuser(56, '', 'Leh Sun', '56', function(err, ret) {
+    (next, err, ret) => {
+      zk.version((err, ret) => {
         console.log(err, ret);
-        cb();
+        next(err, ret);
+      });
+    },
+    (next, err, ret) => {
+      zk.gettime((err, ret) => {
+        console.log(err, ret);
+        next(err, ret);
+      });
+    },
+    (next, err, ret) => {
+      zk.getattendance((err, ret) => {
+        console.log(err, ret);
+        next();
+      });
+    },
+    (next, err, ret) => {
+      zk.getuser((err, ret) => {
+        console.log(err, ret);
+        next(err,ret);
+      });
+    },
+    (next, err, ret) => {
+      zk.enrolluser('56', (err, ret) => {
+        console.log(err, ret);
+        next();
+      });
+    },
+    (next, err, ret) => {
+      zk.setuser(56, '', 'Leh Sun', '56', (err, ret) => {
+        console.log(err, ret);
+        next();
       });
     }
   ],
-  function(err) {
+  (err) => {
     console.log("done!");
   }
 );
