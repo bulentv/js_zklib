@@ -2,7 +2,9 @@ var dgram = require('dgram');
 
 function ZKLib(options) {
   var self = this;
+
   self._initConsts();
+
   self.ip = options.ip;
   self.port = options.port;
   self.inport = options.inport;
