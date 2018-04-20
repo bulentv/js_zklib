@@ -9,7 +9,7 @@ Install with:
 ## Usage
 
 ```js
-var ZKLib = require('zklib');
+const ZKLib = require('zklib');
 
 ZK = new ZKLib({
   ip: '192.168.5.11',
