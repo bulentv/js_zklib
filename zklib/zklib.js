@@ -4,7 +4,7 @@ const mixin = require('./mixin');
 class ZKLib{
 
   constructor(options) {
-    this._initConsts();
+    this.initConsts();
     this.ip = options.ip;
     this.port = options.port;
     this.inport = options.inport;
