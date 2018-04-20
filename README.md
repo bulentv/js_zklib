@@ -68,8 +68,8 @@ ZK.getTime(function(err, time) {
 
 
 ## Notes about versions
-v0.1.x - Supported nodejs version: >= 0.10.48
-v0.2.x - Supported nodejs version: >= 7.5.0 
+* v0.1.x - Supported nodejs version: >= 0.10.48
+* v0.2.x - Supported nodejs version: >= 7.5.0
 
 ## Credits
 
