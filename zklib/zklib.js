@@ -28,7 +28,7 @@ ZKLib.prototype._executeCmd = function(command, command_string, cb) {
   self.socket = dgram.createSocket('udp4');
   self.socket.bind(self.inport);
 
-  let timeout;
+  var timeout;
 
   self.socket.once('message', function(reply, remote) {
     self.socket.close();
@@ -46,14 +46,14 @@ ZKLib.prototype._executeCmd = function(command, command_string, cb) {
     }
   });
 
-  self.socket.send(buf, 0, buf.length, self.port, self.ip, err => {
+  self.socket.send(buf, 0, buf.length, self.port, self.ip, function(err) {
     if (err) {
       cb && cb(err);
       return;
     }
 
     if (self.timeout) {
-      timeout = setTimeout(() => {
+      timeout = setTimeout(function() {
         self.socket.close();
 
         cb && cb(new Error('Timeout error'));
