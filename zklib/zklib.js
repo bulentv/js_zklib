@@ -1,188 +1,199 @@
-var dgram = require('dgram');
+const dgram = require('dgram');
+const mixin = require('./mixin');
 
-function ZKLib(options) {
-  var self = this;
-  self._initConsts();
-  self.ip = options.ip;
-  self.port = options.port;
-  self.inport = options.inport;
-  self.timeout = options.timeout;
+class ZKLib{
 
-  self.socket = null;
+  constructor(options) {
+    this._initConsts();
+    this.ip = options.ip;
+    this.port = options.port;
+    this.inport = options.inport;
+    this.timeout = options.timeout;
 
-  self.reply_id = -1 + self.USHRT_MAX;
+    this.socket = null;
 
-  self.data_recv = '';
-  self.session_id = 0;
+    this.reply_id = -1 + this.USHRT_MAX;
+
+    this.data_recv = '';
+    this.session_id = 0;
+  }
+
+  executeCmd(command, command_string, cb) {
+    if (command == this.Commands.CONNECT) {
+      this.reply_id = -1 + this.USHRT_MAX;
+    }
+
+    const buf = this.createHeader(command, 0, this.session_id, this.reply_id, command_string);
+
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
+
+    let timeout;
+
+    this.socket.once('message', (reply, remote) => {
+      this.socket.close();
+
+      timeout && clearTimeout(timeout);
+
+      this.data_recv = reply;
+
+      if (reply && reply.length) {
+        this.session_id = reply.readUInt16LE(4);
+        this.reply_id = reply.readUInt16LE(6);
+        cb && cb(!this.checkValid(reply), reply);
+      } else {
+        cb && cb('zero length reply');
+      }
+    });
+
+    this.socket.send(buf, 0, buf.length, this.port, this.ip, err => {
+      if (err) {
+        cb && cb(err);
+        return;
+      }
+
+      if (this.timeout) {
+        timeout = setTimeout(() => {
+          this.socket.close();
+
+          cb && cb(new Error('Timeout error'));
+        }, this.timeout);
+      }
+    });
+  }
+
+  createHeader(command, chksum, session_id, reply_id, command_string) {
+    const buf_command_string = new Buffer(command_string);
+    const buf = new Buffer(8 + buf_command_string.length);
+
+    buf.writeUInt16LE(command, 0);
+    buf.writeUInt16LE(chksum, 2);
+    buf.writeUInt16LE(session_id, 4);
+    buf.writeUInt16LE(reply_id, 6);
+
+    buf_command_string.copy(buf, 8);
+
+    const chksum2 = this.createChkSum(buf);
+    buf.writeUInt16LE(chksum2, 2);
+
+    reply_id = (reply_id + 1) % this.USHRT_MAX;
+    buf.writeUInt16LE(reply_id, 6);
+
+    return buf;
+  }
+
+  createChkSum(p) {
+    let chksum = 0;
+
+    for (let i = 0; i < p.length; i += 2) {
+      if (i == p.length - 1) {
+        chksum += p[i];
+      } else {
+        chksum += p.readUInt16LE(i);
+      }
+      chksum %= this.USHRT_MAX;
+    }
+
+    chksum = this.USHRT_MAX - chksum - 1;
+
+    return chksum;
+  }
+
+  initConsts() {
+    this.USHRT_MAX = 65535;
+
+    this.Commands = {
+      CONNECT: 1000,
+      EXIT: 1001,
+      ENABLEDEVICE: 1002,
+      DISABLEDEVICE: 1003,
+      ACK_OK: 2000,
+      ACK_ERROR: 2001,
+      ACK_DATA: 2002,
+      PREPARE_DATA: 1500,
+      DATA: 1501,
+      USER_WRQ: 8,
+      USERTEMP_RRQ: 9,
+      ATTLOG_RRQ: 13,
+      CLEAR_DATA: 14,
+      CLEAR_ATTLOG: 15,
+      DELETE_USER: 18,
+      WRITE_LCD: 66,
+      GET_TIME: 201,
+      SET_TIME: 202,
+      VERSION: 1100,
+      DEVICE: 11,
+      CLEAR_ADMIN: 20,
+      START_ENROLL: 61//,
+      //SET_USER: 8
+    };
+
+    this.Levels = {
+      USER: 0,
+      ADMIN: 14
+    };
+
+    this.States =  {
+      FIRST_PACKET: 1,
+      PACKET: 2,
+      FINISHED: 3
+    };
+  }
+
+  checkValid(reply) {
+    const command = reply.readUInt16LE(0);
+    return command == this.Commands.ACK_OK;
+  }
+
+  encode_time(t) {
+    const d =
+    ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
+      (t.getHours() * 60 + t.getMinutes()) * 60 +
+      t.getSeconds();
+
+    return d;
+  }
+
+  decode_time(t) {
+    const second = t % 60;
+    t = (t - second) / 60;
+
+    const minute = t % 60;
+    t = (t - minute) / 60;
+
+    const hour = t % 24;
+    t = (t - hour) / 24;
+
+    const day = t % 31 + 1;
+    t = (t - (day - 1)) / 31;
+
+    const month = t % 12;
+    t = (t - month) / 12;
+
+    const year = t + 2000;
+
+    const d = new Date(year, month, day, hour, minute, second);
+
+    return d;
+  }
 }
 
-ZKLib.prototype._executeCmd = function(command, command_string, cb) {
-  var self = this;
+const moduleNames = [
+  'connect',
+  'serial',
+  'version',
+  'time',
+  'attendance',
+  'user',
+  'mon'
+];
 
-  if (command == self.CMD_CONNECT) {
-    self.reply_id = -1 + self.USHRT_MAX;
-  }
+const modules = {};
 
-  var buf = self.createHeader(command, 0, self.session_id, self.reply_id, command_string);
-
-  self.socket = dgram.createSocket('udp4');
-  self.socket.bind(self.inport);
-
-  let timeout;
-
-  self.socket.once('message', function(reply, remote) {
-    self.socket.close();
-
-    timeout && clearTimeout(timeout);
-
-    self.data_recv = reply;
-
-    if (reply && reply.length) {
-      self.session_id = reply.readUInt16LE(4);
-      self.reply_id = reply.readUInt16LE(6);
-      cb && cb(!self.checkValid(reply), reply);
-    } else {
-      cb && cb('zero length reply');
-    }
-  });
-
-  self.socket.send(buf, 0, buf.length, self.port, self.ip, err => {
-    if (err) {
-      cb && cb(err);
-      return;
-    }
-
-    if (self.timeout) {
-      timeout = setTimeout(() => {
-        self.socket.close();
-
-        cb && cb(new Error('Timeout error'));
-      }, self.timeout);
-    }
-  });
-};
-
-ZKLib.prototype.createHeader = function(command, chksum, session_id, reply_id, command_string) {
-  var self = this;
-
-  var buf_command_string = new Buffer(command_string);
-  var buf = new Buffer(8 + buf_command_string.length);
-
-  buf.writeUInt16LE(command, 0);
-  buf.writeUInt16LE(chksum, 2);
-  buf.writeUInt16LE(session_id, 4);
-  buf.writeUInt16LE(reply_id, 6);
-
-  buf_command_string.copy(buf, 8);
-
-  var chksum = self.createChkSum(buf);
-  buf.writeUInt16LE(chksum, 2);
-
-  reply_id = (reply_id + 1) % self.USHRT_MAX;
-  buf.writeUInt16LE(reply_id, 6);
-
-  return buf;
-};
-
-ZKLib.prototype.createChkSum = function(p) {
-  var self = this;
-
-  var chksum = 0;
-
-  for (var i = 0; i < p.length; i += 2) {
-    if (i == p.length - 1) {
-      chksum += p[i];
-    } else {
-      chksum += p.readUInt16LE(i);
-    }
-    chksum %= self.USHRT_MAX;
-  }
-
-  chksum = self.USHRT_MAX - chksum - 1;
-
-  return chksum;
-};
-
-ZKLib.prototype._initConsts = function() {
-  var self = this;
-  self.USHRT_MAX = 65535;
-  self.CMD_CONNECT = 1000;
-  self.CMD_EXIT = 1001;
-  self.CMD_ENABLEDEVICE = 1002;
-  self.CMD_DISABLEDEVICE = 1003;
-  self.CMD_ACK_OK = 2000;
-  self.CMD_ACK_ERROR = 2001;
-  self.CMD_ACK_DATA = 2002;
-  self.CMD_PREPARE_DATA = 1500;
-  self.CMD_DATA = 1501;
-  self.CMD_USER_WRQ = 8;
-  self.CMD_USERTEMP_RRQ = 9;
-  self.CMD_ATTLOG_RRQ = 13;
-  self.CMD_CLEAR_DATA = 14;
-  self.CMD_CLEAR_ATTLOG = 15;
-  self.CMD_DELETE_USER = 18;
-  self.CMD_WRITE_LCD = 66;
-  self.CMD_GET_TIME = 201;
-  self.CMD_SET_TIME = 202;
-  self.CMD_VERSION = 1100;
-  self.CMD_DEVICE = 11;
-  self.CMD_CLEAR_ADMIN = 20;
-  // self.CMD_SET_USER = 8;
-  self.LEVEL_USER = 0;
-  self.LEVEL_ADMIN = 14;
-  self.CMD_START_ENROLL = 61;
-
-  self.STATE_FIRST_PACKET = 1;
-  self.STATE_PACKET = 2;
-  self.STATE_FINISHED = 3;
-};
-
-ZKLib.prototype.checkValid = function(reply) {
-  var self = this;
-
-  var command = reply.readUInt16LE(0);
-
-  return command == self.CMD_ACK_OK;
-};
-
-ZKLib.prototype.encode_time = function(t) {
-  var d =
-    ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
-    (t.getHours() * 60 + t.getMinutes()) * 60 +
-    t.getSeconds();
-
-  return d;
-};
-
-ZKLib.prototype.decode_time = function(t) {
-  var second = t % 60;
-  t = (t - second) / 60;
-
-  var minute = t % 60;
-  t = (t - minute) / 60;
-
-  var hour = t % 24;
-  t = (t - hour) / 24;
-
-  var day = t % 31 + 1;
-  t = (t - (day - 1)) / 31;
-
-  var month = t % 12;
-  t = (t - month) / 12;
-
-  var year = t + 2000;
-
-  var d = new Date(year, month, day, hour, minute, second);
-
-  return d;
-};
+for (let i = 0; i < moduleNames.length; i++) {
+  const moduleName = moduleNames[i];
+  const moduleImpl = require(`./zk${moduleName}`);
+  mixin(ZKLib, moduleImpl);
+}
 
 module.exports = ZKLib;
-
-require('./zkconnect')(ZKLib);
-require('./zkserial')(ZKLib);
-require('./zkversion')(ZKLib);
-require('./zktime')(ZKLib);
-require('./zkattendance')(ZKLib);
-require('./zkuser')(ZKLib);
-require('./zkmon')(ZKLib);

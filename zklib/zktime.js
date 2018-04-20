@@ -1,30 +1,36 @@
-var dgram = require('dgram');
+const dgram = require('dgram');
 
-module.exports = function(ZKLib) {
-
-  ZKLib.prototype.gettime = function(cb) {
-    var self = this;
-
-    return this._executeCmd( this.CMD_GET_TIME, '', function(err,ret) {
-      if(err || !ret || ret.length <= 8)
+module.exports = class {
+  getTime(cb) {
+    this.executeCmd( this.Commands.GET_TIME, '', (err, ret) => {
+      if (err || !ret || ret.length <= 8)
         return cb(err);
 
-      return cb(null, self.decode_time(ret.readUInt32LE(8)));
+      return cb(null, this.decode_time(ret.readUInt32LE(8)));
     });
-  };
+  }
 
-  ZKLib.prototype.settime = function(t,cb) {
-    var self = this;
+  setTime(t,cb) {
+    const command_string = new Buffer(4);
+    command_string.writeUInt32LE(this.encode_time(t), 0);
 
-    var command_string = new Buffer(4);
-    command_string.writeUInt32LE(self.encode_time(t), 0);
-
-    return this._executeCmd( this.CMD_SET_TIME, command_string, function(err,ret) {
-      if(err || !ret || ret.length <= 8)
+    this.executeCmd( this.Commands.SET_TIME, command_string, (err, ret) => {
+      if (err || !ret || ret.length <= 8) {
         return cb(err);
+      }
 
-      return cb(!self.checkValid(ret), ret);
+      return cb(!this.checkValid(ret), ret);
     });
-  };
+  }
 
+  // Deprecation warnings
+  gettime(cb) {
+    console.error('gettime() function will deprecated soon, please use getTime()')
+    return this.getTime(cb);
+  }
+
+  settime(cb) {
+    console.error('settime() function will deprecated soon, please use setTime()')
+    return this.setTime(cb);
+  }
 }

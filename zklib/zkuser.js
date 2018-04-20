@@ -1,20 +1,19 @@
-var dgram = require('dgram');
+const dgram = require('dgram');
 
-module.exports = function(ZKLib) {
-  ZKLib.prototype.getSizeUser = function() {
-    var self = this;
+module.exports = class {
+  getSizeUser() {
+    const command = this.data_recv.readUInt16LE(0);
 
-    var command = self.data_recv.readUInt16LE(0);
-    if ( command == self.CMD_PREPARE_DATA ) {
-      var size = self.data_recv.readUInt32LE(8);
+    if (command == this.Commands.PREPARE_DATA ) {
+      const size = this.data_recv.readUInt32LE(8);
       return size;
     } else {
       return false;
     }
-  };
+  }
 
-  ZKLib.prototype.decodeUserData = function(userdata) {
-    var user = {
+  decodeUserData(userdata) {
+    const user = {
       uid: userdata.readUInt16BE(0),
       role: userdata.readUInt16BE(2),
       password: userdata.slice(4,12).toString("ascii").split('\0').shift(),
@@ -22,145 +21,148 @@ module.exports = function(ZKLib) {
       cardno: userdata.readUInt32LE(36),
       userid: userdata.slice(49,72).toString("ascii").split('\0').shift()
     };
+
     return user;
-  };
+  }
 
-  ZKLib.prototype.deluser = function(id,cb) {
-    var self = this;
-    var command = self.CMD_DELETE_USER;
-    var command_string = new Buffer(2);
+  delUser(id, cb) {
+    const command = this.Commands.DELETE_USER;
+    const command_string = new Buffer(2);
+
     command_string.writeUInt16LE(id,0);
-    var chksum = 0;
-    var session_id = self.session_id;
 
-    var reply_id = self.data_recv.readUInt16LE(6);
+    let chksum = 0;
 
-    var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
-    
-    self.socket = dgram.createSocket('udp4');
-    self.socket.bind(self.inport);
+    const session_id = this.session_id;
+    const reply_id = this.data_recv.readUInt16LE(6);
+    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
 
-    self.socket.once('message', function(reply, remote) {
-      self.socket.close();
-      
-      self.data_recv = reply;
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
 
-      if(reply && reply.length) {
-        self.session_id = reply.readUInt16LE(4);
-        cb(!self.checkValid(reply), reply);//self.decode_time(reply.readUInt32LE(8)));
+    this.socket.once('message', (reply, remote) => {
+      this.socket.close();
+
+      this.data_recv = reply;
+
+      if (reply && reply.length) {
+        this.session_id = reply.readUInt16LE(4);
+        cb(!this.checkValid(reply), reply);//this.decode_time(reply.readUInt32LE(8)));
       }else{
         cb("zero length reply");
       }
     });
 
-    self.socket.send(buf, 0, buf.length, self.port, self.ip);
-  };
-  
-  ZKLib.prototype.setuser = function(uid, password='', name = '', user_id = '', cb) {
-      var self = this;
-      var command = self.CMD_USER_WRQ;
-      var command_string = new Buffer(72);
-      command_string.writeUInt16LE(uid,0);
-      command_string[2] = 0;
-      command_string.write(password,3,11);
-      command_string.write(name,11,39);
-      command_string[39] = 1;
-      command_string.writeUInt32LE(0,40);
-      command_string.write(user_id.toString(10),48)
-      
-      var chksum = 0;
-      var session_id = self.session_id;
-      var reply_id = self.data_recv.readUInt16LE(6);
+    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+  }
 
-      var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
-      self.socket = dgram.createSocket('udp4');
-      self.socket.bind(self.inport);
+  setUser(uid, password = '', name = '', user_id = '', cb) {
+    const command = this.Commands.USER_WRQ;
+    const command_string = new Buffer(72);
 
-      self.socket.once('message', function(reply, remote) {
-        self.socket.close();
-        self.data_recv = reply;
+    command_string.writeUInt16LE(uid,0);
+    command_string[2] = 0;
+    command_string.write(password,3,11);
+    command_string.write(name,11,39);
+    command_string[39] = 1;
+    command_string.writeUInt32LE(0,40);
+    command_string.write(user_id.toString(10),48)
 
-        if (reply && reply.length) {
-          self.session_id = reply.readUInt16LE(4);
-          cb(!self.checkValid(reply), reply);
-        }
-        else {
-          ch("Zero Length Reply");
-        }
-      });
+    let chksum = 0;
+    const session_id = this.session_id;
+    const reply_id = this.data_recv.readUInt16LE(6);
 
-      self.socket.send(buf, 0, buf.length, self.port, self.ip);
-  };
+    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
 
-  ZKLib.prototype.enrolluser = function(id, cb) {
-    var self = this;
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
 
-    var command = self.CMD_START_ENROLL;
-    var command_string = new Buffer(2);
+    this.socket.once('message', (reply, remote) => {
+      this.socket.close();
+      this.data_recv = reply;
+
+      if (reply && reply.length) {
+        this.session_id = reply.readUInt16LE(4);
+        cb(!this.checkValid(reply), reply);
+      } else {
+        ch("Zero Length Reply");
+      }
+    });
+
+    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+  }
+
+  enrollUser(id, cb) {
+    const command = this.Commands.START_ENROLL;
+    const command_string = new Buffer(2);
+
     command_string.write(id);
-    var chksum = 0;
-    var session_id = self.session_id;
-    var reply_id = self.data_recv.readUInt16LE(6);
-    var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
-    
-    self.socket = dgram.createSocket('udp4');
-    self.socket.bind(self.inport);
 
-    self.socket.once('message', function(reply, remote) {
-      self.socket.close();
-      self.data_recv = reply;
+    let chksum = 0;
+    const session_id = this.session_id;
+    const reply_id = this.data_recv.readUInt16LE(6);
+    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
 
-      if(reply && reply.length) {
-        self.session_id = reply.readUInt16LE(4);
-        cb(!self.checkValid(reply), reply);//self.decode_time(reply.readUInt32LE(8)));
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
+
+    this.socket.once('message', (reply, remote) => {
+      this.socket.close();
+      this.data_recv = reply;
+
+      if (reply && reply.length) {
+        this.session_id = reply.readUInt16LE(4);
+        cb(!this.checkValid(reply), reply);//this.decode_time(reply.readUInt32LE(8)));
       }else{
         cb("zero length reply");
       }
     });
 
-    self.socket.send(buf, 0, buf.length, self.port, self.ip);
-  };
+    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+  }
 
 
-  ZKLib.prototype.getuser = function(cb) {
-    var self = this;
-    var command = self.CMD_USERTEMP_RRQ;
-    var command_string = new Buffer([0x05]);
-    var chksum = 0;
-    var session_id = self.session_id;
-    var reply_id = self.data_recv.readUInt16LE(6);
+  getUser(cb) {
+    const command = this.Commands.USERTEMP_RRQ;
+    const command_string = new Buffer([0x05]);
 
-    var buf = self.createHeader(command, chksum, session_id, reply_id, command_string);
+    let chksum = 0;
 
-    self.socket = dgram.createSocket('udp4');
-    self.socket.bind(self.inport);
+    const session_id = this.session_id;
+    const reply_id = this.data_recv.readUInt16LE(6);
 
-    var state = self.STATE_FIRST_PACKET;
-    var total_bytes = 0;
-    var bytes_recv = 0;
+    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
 
-    var rem = null;
-    var offset = 0;
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
 
-    var userdata_size = 72;
-    var trim_first = 11;
-    var trim_others = 8;
-    var users = [];
+    const state = this.States.FIRST_PACKET;
+    let total_bytes = 0;
+    let bytes_recv = 0;
+    let rem = null;
+    let offset = 0;
 
-    self.socket.on('message', function(reply, remote) {
-      switch(state) {
-        case self.STATE_FIRST_PACKET:
-          state = self.STATE_PACKET;
+    const userdata_size = 72;
+    const trim_first = 11;
+    const trim_others = 8;
+    const users = [];
 
-          self.data_recv = reply;
+    this.socket.on('message', (reply, remote) => {
+      switch (state) {
 
-          if(reply && reply.length) {
-            self.session_id = reply.readUInt16LE(4);
+        case this.States.FIRST_PACKET:
+          state = this.States.PACKET;
 
-            total_bytes = self.getSizeUser();
-            if( total_bytes <= 0 ) {
-              self.socket.removeAllListeners('message');
-              self.socket.close();
+          this.data_recv = reply;
+
+          if (reply && reply.length) {
+            this.session_id = reply.readUInt16LE(4);
+
+            total_bytes = this.getSizeUser();
+
+            if (total_bytes <= 0) {
+              this.socket.removeAllListeners('message');
+              this.socket.close();
               return cb("no data");
             }
           }else{
@@ -169,17 +171,18 @@ module.exports = function(ZKLib) {
 
           break;
 
-        case self.STATE_PACKET:
-          if(bytes_recv == 0) {
+        case this.States.PACKET:
+          if (bytes_recv == 0) {
             offset = trim_first;
             bytes_recv = 4;
-          }else{
+          } else{
             offset = trim_others;
           }
 
-          while(reply.length-offset >= userdata_size) {
-            var userdata = new Buffer(userdata_size);
-            if(rem && rem.length > 0) {
+          while (reply.length-offset >= userdata_size) {
+            const userdata = new Buffer(userdata_size);
+
+            if (rem && rem.length > 0) {
               rem.copy(userdata);
               reply.copy(userdata,rem.length,offset);
               offset += userdata_size - rem.length;
@@ -189,27 +192,52 @@ module.exports = function(ZKLib) {
               offset += userdata_size;
             }
 
-            var user = self.decodeUserData(userdata);
+            const user = this.decodeUserData(userdata);
             users.push(user);
-            
+
             bytes_recv += userdata_size;
-            if(bytes_recv == total_bytes) {
-              state = self.STATE_FINISHED;
+
+            if (bytes_recv == total_bytes) {
+              state = this.States.FINISHED;
             }
           }
 
           rem = new Buffer(reply.length - offset);
           reply.copy(rem,0,offset);
+
           break;
 
-        case self.STATE_FINISHED:
-          self.socket.removeAllListeners('message');
-          self.socket.close();
+        case this.States.FINISHED:
+          this.socket.removeAllListeners('message');
+          this.socket.close();
+
           cb(null,users);
+
           break;
       }
     });
 
-    self.socket.send(buf, 0, buf.length, self.port, self.ip);
+    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+  }
+
+  // Deprecation warnings
+  getuser(cb) {
+    console.error('getuser() function will deprecated soon, please use getUser()')
+    return this.getUser(cb);
+  }
+
+  enrolluser(id, cb) {
+    console.error('enrolluser() function will deprecated soon, please use enrollUser()')
+    return this.enrollUser(id, cb);
+  }
+
+  setuser(uid, password = '', name = '', user_id = '', cb) {
+    console.error('setuser() function will deprecated soon, please use setUser()')
+    return this.setUser(uid, password, name, user_id, cb);
+  }
+
+  deluser(id,cb) {
+    console.error('deluser() function will deprecated soon, please use delUser()')
+    return this.delUser(id, cb);
   }
 };

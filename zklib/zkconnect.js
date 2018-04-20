@@ -1,13 +1,11 @@
-var dgram = require('dgram');
+const dgram = require('dgram');
 
-module.exports = function(ZKLib) {
+module.exports = class {
+  connect(cb) {
+    return this.executeCmd( this.Commands.CONNECT, '', cb );
+  }
 
-  ZKLib.prototype.connect = function(cb) {
-    return this._executeCmd( this.CMD_CONNECT, '', cb );
-  };
-
-  ZKLib.prototype.disconnect = function(cb) {
-    return this._executeCmd( this.CMD_EXIT, '', cb );
-  };
-
-}
+  disconnect(cb) {
+    return this.executeCmd( this.Commands.EXIT, '', cb );
+  }
+};

@@ -23,7 +23,7 @@ ZK.connect(function(err) {
   if (err) throw err;
 
   // read the time info from th device
-  ZK.gettime(function(err, t) {
+  ZK.getTime(function(err, t) {
     // disconnect from the device
     ZK.disconnect();
 
@@ -40,16 +40,16 @@ ZK.connect(function(err) {
 * disconnect() -> Disconnect connection with machine.
 * serialNumber(callback) -> Get serial number machine.
 * version(callback) -> Get version of machine.
-* getattendance(callback) -> Get attendance data.
+* getAttendance(callback) -> Get attendance data.
 * clearAttendanceLog(callback) -> Clear the attendance logs from device.
-* gettime(callback) -> Get time of machine.
-* settime(value, callback) -> Set time in machine.
-* getuser(callback) -> Get all user in machine.
+* getTime(callback) -> Get time of machine.
+* setTime(value, callback) -> Set time in machine.
+* getUser(callback) -> Get all user in machine.
 
 ## Handle Callback
 
 ```js
-ZK.gettime(function(err, time) {
+ZK.getTime(function(err, time) {
   if (err) throw err;
   console.log("Device clock's time is " + time.toString());
 });
