@@ -14,17 +14,22 @@ var ZKLib = require('zklib');
 ZK = new ZKLib({
   ip: '192.168.5.11',
   port: 4370,
-  inport: 5200
+  inport: 5200,
+  timeout: 5000 // optional
 });
 
 // connect to access control device
-ZK.connect(function() {
+ZK.connect(function(err) {
+  if (err) throw err;
+
   // read the time info from th device
   ZK.gettime(function(err, t) {
-    console.log("Device clock's time is " + t.toString());
-
     // disconnect from the device
     ZK.disconnect();
+
+    if (err) throw err;
+
+    console.log("Device clock's time is " + t.toString());
   });
 });
 ```
@@ -36,6 +41,7 @@ ZK.connect(function() {
 * serialNumber(callback) -> Get serial number machine.
 * version(callback) -> Get version of machine.
 * getattendance(callback) -> Get attendance data.
+* clearAttendanceLog(callback) -> Clear the attendance logs from device.
 * gettime(callback) -> Get time of machine.
 * settime(value, callback) -> Set time in machine.
 * getuser(callback) -> Get all user in machine.
