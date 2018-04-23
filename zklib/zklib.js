@@ -1,14 +1,24 @@
 const dgram = require('dgram');
+
 const mixin = require('./mixin');
+const attParserLegacy = require('./att_parser_legacy');
+const attParserV660 = require('./att_parser_v6.60');
+const { defaultTo } = require('./utils');
 
-class ZKLib{
-
+class ZKLib {
+  /**
+   * @param  { {ip:string, port?:number, inport:number, timeout?:number, attendanceParser?: string }} options
+   */
   constructor(options) {
     this.initConsts();
+
+    this.validateOptions(options);
+
     this.ip = options.ip;
-    this.port = options.port;
+    this.port = defaultTo(options.port, 4370);
     this.inport = options.inport;
     this.timeout = options.timeout;
+    this.attendanceParser = defaultTo(options.attendanceParser, attParserLegacy.name);
 
     this.socket = null;
 
@@ -16,6 +26,24 @@ class ZKLib{
 
     this.data_recv = '';
     this.session_id = 0;
+  }
+
+  validateOptions(options) {
+    if (!options) {
+      throw new Error('Options required');
+    }
+
+    if (!options.ip) {
+      throw new Error('IP option required');
+    }
+
+    if (!options.inport) {
+      throw new Error('Inport option required');
+    }
+
+    if (options.attendanceParser && ![attParserLegacy.name, attParserV660.name].includes(options.attendanceParser)) {
+      throw new Error('Attendance parser option unknown');
+    }
   }
 
   executeCmd(command, command_string, cb) {
@@ -124,7 +152,7 @@ class ZKLib{
       VERSION: 1100,
       DEVICE: 11,
       CLEAR_ADMIN: 20,
-      START_ENROLL: 61//,
+      START_ENROLL: 61 //,
       //SET_USER: 8
     };
 
@@ -133,7 +161,7 @@ class ZKLib{
       ADMIN: 14
     };
 
-    this.States =  {
+    this.States = {
       FIRST_PACKET: 1,
       PACKET: 2,
       FINISHED: 3
@@ -147,46 +175,15 @@ class ZKLib{
 
   encode_time(t) {
     const d =
-    ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
+      ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
       (t.getHours() * 60 + t.getMinutes()) * 60 +
       t.getSeconds();
 
     return d;
   }
-
-  decode_time(t) {
-    const second = t % 60;
-    t = (t - second) / 60;
-
-    const minute = t % 60;
-    t = (t - minute) / 60;
-
-    const hour = t % 24;
-    t = (t - hour) / 24;
-
-    const day = t % 31 + 1;
-    t = (t - (day - 1)) / 31;
-
-    const month = t % 12;
-    t = (t - month) / 12;
-
-    const year = t + 2000;
-
-    const d = new Date(year, month, day, hour, minute, second);
-
-    return d;
-  }
 }
 
-const moduleNames = [
-  'connect',
-  'serial',
-  'version',
-  'time',
-  'attendance',
-  'user',
-  'mon'
-];
+const moduleNames = ['connect', 'serial', 'version', 'time', 'attendance', 'user', 'mon'];
 
 const modules = {};
 

@@ -1,4 +1,6 @@
 const dgram = require('dgram');
+const attParserLegacy = require('./att_parser_legacy');
+const attParserV660 = require('./att_parser_v6.60');
 
 module.exports = class {
   getSizeAttendance() {
@@ -12,27 +14,14 @@ module.exports = class {
   }
 
   decodeAttendanceData(attdata) {
-    const att = {
-      uid:
-      parseInt(
-        attdata
-        .slice(0, 4)
-        .toString('ascii')
-        .split('\0')
-        .shift()
-      ) || 0,
-      id:
-      parseInt(
-        attdata
-        .slice(4, 8)
-        .toString('ascii')
-        .split('\0')
-        .shift()
-      ) || 0,
-      state: attdata[28],
-      timestamp: this.decode_time(attdata.readUInt32LE(29))
-    };
-    return att;
+    switch (this.attendanceParser) {
+      case attParserV660.name:
+        return attParserV660.parse(attdata);
+
+      case attParserLegacy.name:
+      default:
+        return attParserLegacy.parse(attdata);
+    }
   }
 
   getAttendance(cb) {
@@ -137,8 +126,7 @@ module.exports = class {
 
   // Deprecation warnings
   getattendance(cb) {
-    console.error('getattendance() function will deprecated soon, please use getAttendance()')
+    console.error('getattendance() function will deprecated soon, please use getAttendance()');
     return this.getAttendance(cb);
   }
-}
-
+};

@@ -1,18 +1,18 @@
 {
   "name": "zklib",
   "version": "0.2.0",
-  "description": "Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370",
+  "description":
+    "Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370",
   "main": "zklib/zklib.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "yarn test --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bulentv/js_zklib.git"
   },
-  "keywords": [
-    "zklib"
-  ],
+  "keywords": ["zklib"],
   "author": {
     "name": "Bulent Vural",
     "email": "bulentv@gmail.com",
@@ -48,5 +48,8 @@
   "_resolved": "https://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz",
   "dependencies": {
     "async": "^2.6.0"
+  },
+  "devDependencies": {
+    "jest": "^22.4.3"
   }
 }
