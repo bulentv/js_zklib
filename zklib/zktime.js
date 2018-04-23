@@ -1,20 +1,20 @@
 const dgram = require('dgram');
+const timeParser = require('./timestamp_parser');
 
 module.exports = class {
   getTime(cb) {
-    this.executeCmd( this.Commands.GET_TIME, '', (err, ret) => {
-      if (err || !ret || ret.length <= 8)
-        return cb(err);
+    this.executeCmd(this.Commands.GET_TIME, '', (err, ret) => {
+      if (err || !ret || ret.length <= 8) return cb(err);
 
-      return cb(null, this.decode_time(ret.readUInt32LE(8)));
+      return cb(null, timeParser(ret.readUInt32LE(8)));
     });
   }
 
-  setTime(t,cb) {
+  setTime(t, cb) {
     const command_string = new Buffer(4);
     command_string.writeUInt32LE(this.encode_time(t), 0);
 
-    this.executeCmd( this.Commands.SET_TIME, command_string, (err, ret) => {
+    this.executeCmd(this.Commands.SET_TIME, command_string, (err, ret) => {
       if (err || !ret || ret.length <= 8) {
         return cb(err);
       }
@@ -25,12 +25,12 @@ module.exports = class {
 
   // Deprecation warnings
   gettime(cb) {
-    console.error('gettime() function will deprecated soon, please use getTime()')
+    console.error('gettime() function will deprecated soon, please use getTime()');
     return this.getTime(cb);
   }
 
   settime(cb) {
-    console.error('settime() function will deprecated soon, please use setTime()')
+    console.error('settime() function will deprecated soon, please use setTime()');
     return this.setTime(cb);
   }
-}
+};

@@ -15,7 +15,7 @@ ZK = new ZKLib({
   ip: '192.168.5.11',
   port: 4370,
   inport: 5200,
-  timeout: 5000 // optional
+  timeout: 5000
 });
 
 // connect to access control device
@@ -33,6 +33,16 @@ ZK.connect(function(err) {
   });
 });
 ```
+
+## Configuration
+
+| Option           | Required | Values                | Default  |
+| ---------------- | -------- | --------------------- | -------- |
+| ip               | yes      | string                |          |
+| port             | -        | number                | 4370     |
+| inport           | yes      | number                |          |
+| timeout          | -        | number                | -        |
+| attendanceParser | -        | [ 'legacy', 'v6.60' ] | 'legacy' |
 
 ## API
 
@@ -55,6 +65,12 @@ ZK.getTime(function(err, time) {
 });
 ```
 
+## Testing
+
+```js
+yarn test
+```
+
 ## Contributors
 
 * Bulent Vural https://github.com/bulentv
@@ -66,8 +82,8 @@ ZK.getTime(function(err, time) {
 
 * Open a pull request
 
-
 ## Notes about versions
+
 * v0.1.x - Supported nodejs version: >= 0.10.48
 * v0.2.x - Supported nodejs version: >= 7.5.0
 

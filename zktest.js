@@ -5,16 +5,15 @@ const ip = '192.168.1.201';
 const port = 4370;
 const inport = 5200;
 
-const zk = new ZKLib({ip, port, inport});
+const zk = new ZKLib({ ip, port, inport });
 
 async.series(
   [
-    (next) => {
-      zk.connect((err,ret) => {
+    next => {
+      zk.connect((err, ret) => {
         next(err, ret);
       });
     },
-    
     (next, err, ret) => {
       zk.serialNumber((err, ret) => {
         console.log(err, ret);
@@ -42,7 +41,7 @@ async.series(
     (next, err, ret) => {
       zk.getuser((err, ret) => {
         console.log(err, ret);
-        next(err,ret);
+        next(err, ret);
       });
     },
     (next, err, ret) => {
@@ -58,9 +57,7 @@ async.series(
       });
     }
   ],
-  (err) => {
-    console.log("done!");
+  err => {
+    console.log('done!');
   }
 );
-
-
