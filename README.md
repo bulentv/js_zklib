@@ -74,9 +74,9 @@ yarn test
 ## Contributors
 
 * Bulent Vural https://github.com/bulentv
+* Matias Ribichich https://github.com/mribichich
 * Shodiqul Muzaki https://github.com/creativefull
 * shubhamoy https://github.com/shubhamoy
-* mribichich https://github.com/mribichich
 
 ## How to Contribute
 
