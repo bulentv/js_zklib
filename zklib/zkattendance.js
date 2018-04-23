@@ -6,10 +6,10 @@ module.exports = class {
   getSizeAttendance() {
     const command = this.data_recv.readUInt16LE(0);
 
-    if (command == this.Command.PREPARE_DATA) {
+    if (command == this.Commands.PREPARE_DATA) {
       return this.data_recv.readUInt32LE(8);
     } else {
-      return false;
+      return 0;
     }
   }
 
@@ -25,7 +25,7 @@ module.exports = class {
   }
 
   getAttendance(cb) {
-    const command = this.Command.ATTLOG_RRQ;
+    const command = this.Commands.ATTLOG_RRQ;
     const command_string = new Buffer([]);
     let chksum = 0;
     const session_id = this.session_id;
@@ -36,11 +36,11 @@ module.exports = class {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    const state = this.States.FIRST_PACKET;
+    let state = this.States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
 
-    const rem = [];
+    let rem = new Buffer([]);
     let offset = 0;
 
     const attdata_size = 40;
@@ -85,7 +85,7 @@ module.exports = class {
               rem.copy(attdata);
               reply.copy(attdata, rem.length, offset);
               offset += attdata_size - rem.length;
-              rem = [];
+              rem = new Buffer([]);
             } else {
               reply.copy(attdata, 0, offset);
               offset += attdata_size;

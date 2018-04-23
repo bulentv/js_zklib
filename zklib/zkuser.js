@@ -8,7 +8,7 @@ module.exports = class {
       const size = this.data_recv.readUInt32LE(8);
       return size;
     } else {
-      return false;
+      return 0;
     }
   }
 
@@ -97,7 +97,7 @@ module.exports = class {
         this.session_id = reply.readUInt16LE(4);
         cb(!this.checkValid(reply), reply);
       } else {
-        ch('Zero Length Reply');
+        cb('Zero Length Reply');
       }
     });
 
@@ -147,10 +147,10 @@ module.exports = class {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    const state = this.States.FIRST_PACKET;
+    let state = this.States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
-    let rem = null;
+    let rem = new Buffer([]);
     let offset = 0;
 
     const userdata_size = 72;
@@ -173,6 +173,7 @@ module.exports = class {
             if (total_bytes <= 0) {
               this.socket.removeAllListeners('message');
               this.socket.close();
+
               return cb('no data');
             }
           } else {
@@ -189,14 +190,14 @@ module.exports = class {
             offset = trim_others;
           }
 
-          while (reply.length - offset >= userdata_size) {
+          while (reply.length + rem.length - offset >= userdata_size) {
             const userdata = new Buffer(userdata_size);
 
-            if (rem && rem.length > 0) {
+            if (rem.length > 0) {
               rem.copy(userdata);
               reply.copy(userdata, rem.length, offset);
               offset += userdata_size - rem.length;
-              rem = null;
+              rem = new Buffer([]);
             } else {
               reply.copy(userdata, 0, offset);
               offset += userdata_size;

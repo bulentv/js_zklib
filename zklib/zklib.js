@@ -172,15 +172,6 @@ class ZKLib {
     const command = reply.readUInt16LE(0);
     return command == this.Commands.ACK_OK;
   }
-
-  encode_time(t) {
-    const d =
-      ((t.getFullYear() % 100) * 12 * 31 + t.getMonth() * 31 + t.getDate() - 1) * (24 * 60 * 60) +
-      (t.getHours() * 60 + t.getMinutes()) * 60 +
-      t.getSeconds();
-
-    return d;
-  }
 }
 
 const moduleNames = ['connect', 'serial', 'version', 'time', 'attendance', 'user', 'mon'];

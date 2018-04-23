@@ -6,13 +6,13 @@ module.exports = class {
     this.executeCmd(this.Commands.GET_TIME, '', (err, ret) => {
       if (err || !ret || ret.length <= 8) return cb(err);
 
-      return cb(null, timeParser(ret.readUInt32LE(8)));
+      return cb(null, timeParser.decode(ret.readUInt32LE(8)));
     });
   }
 
-  setTime(t, cb) {
+  setTime(date, cb) {
     const command_string = new Buffer(4);
-    command_string.writeUInt32LE(this.encode_time(t), 0);
+    command_string.writeUInt32LE(timeParser.encode(date), 0);
 
     this.executeCmd(this.Commands.SET_TIME, command_string, (err, ret) => {
       if (err || !ret || ret.length <= 8) {

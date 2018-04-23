@@ -1,4 +1,8 @@
-module.exports = time => {
+/**
+ *
+ * @param {number} time
+ */
+exports.decode = time => {
   const second = time % 60;
   time = (time - second) / 60;
 
@@ -17,4 +21,16 @@ module.exports = time => {
   const year = time + 2000;
 
   return new Date(year, month, day, hour, minute, second);
+};
+
+/**
+ *
+ * @param {Date} date
+ */
+exports.encode = date => {
+  return (
+    ((date.getFullYear() % 100) * 12 * 31 + date.getMonth() * 31 + date.getDate() - 1) * (24 * 60 * 60) +
+    (date.getHours() * 60 + date.getMinutes()) * 60 +
+    date.getSeconds()
+  );
 };
