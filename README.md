@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/bulentv/js_zklib.svg?branch=master)](https://travis-ci.org/bulentv/js_zklib)
+
 # node-zklib
 
 Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370
