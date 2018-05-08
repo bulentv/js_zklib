@@ -12,6 +12,6 @@ describe('parse', () => {
       ...[0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x58, 0x0d, 0x04, 0x23, 0x01]
     ]);
 
-    expect(parse(buffer)).toEqual({ id: 282, uid: 4, state: 1, timestamp: new Date('2018-04-11T12:35:20.000Z') });
+    expect(parse(buffer)).toEqual({ id: 282, uid: 4, state: 1, timestamp: new Date(2018, 4 - 1, 11, 9, 35, 20, 0) });
   });
 });
