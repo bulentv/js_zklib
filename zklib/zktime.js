@@ -19,7 +19,7 @@ module.exports = class {
         return cb(err);
       }
 
-      return cb(!this.checkValid(ret), ret);
+      return cb(this.checkValid(ret) ? null : 'Invalid request', ret);
     });
   }
 
