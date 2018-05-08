@@ -1,3 +1,5 @@
+const { Commands } = require('./constants');
+
 /**
  *
  * @param {string|Error} err
@@ -13,7 +15,7 @@ module.exports = class {
    * @param {(err: Error|string) => void} cb
    */
   enableDevice(cb) {
-    this.executeCmd(this.Commands.ENABLEDEVICE, '', (err, ret) => {
+    this.executeCmd(Commands.ENABLEDEVICE, '', (err, ret) => {
       const errResult = checkCmdArgs(err, ret);
 
       if (errResult) {
@@ -31,7 +33,7 @@ module.exports = class {
   disableDevice(cb) {
     const buffer = new Buffer([0, 0, 0, 0]);
 
-    this.executeCmd(this.Commands.DISABLEDEVICE, buffer, (err, ret) => {
+    this.executeCmd(Commands.DISABLEDEVICE, buffer, (err, ret) => {
       const errResult = checkCmdArgs(err, ret);
 
       if (errResult) {

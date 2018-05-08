@@ -1,7 +1,8 @@
 const dgram = require('dgram');
 
-module.exports = class {
+const { Commands } = require('./constants');
 
+module.exports = class {
   decodeAttLog(buf) {
     const ret = {
       userid: parseInt(buf.slice(8, 11).toString('ascii')),
@@ -12,13 +13,13 @@ module.exports = class {
   }
 
   startMon(opts) {
-    this.connect((err) => {
+    this.connect(err => {
       //console.log(this.ip + ":" + this.port + " s:" + ret.toString("hex"));
 
       this.socket = dgram.createSocket('udp4');
       this.socket.bind(this.inport);
 
-      this.socket.on('message', (ret) => {
+      this.socket.on('message', ret => {
         //console.log(this.ip + ":" + this.port + " s:" + ret.toString("hex"));
 
         this.session_id = ret.readUInt16LE(4);
@@ -31,7 +32,7 @@ module.exports = class {
 
       const buf = new Buffer(12);
 
-      buf.writeUInt16LE(this.Commands.REG_EVENT, 0);
+      buf.writeUInt16LE(Commands.REG_EVENT, 0);
       buf.writeUInt16LE(0, 2);
       buf.writeUInt16LE(this.session_id, 4);
       buf.writeUInt16LE(this.reply_id, 6);
@@ -42,7 +43,7 @@ module.exports = class {
       this.reply_id = (this.reply_id + 1) % this.USHRT_MAX;
       buf.writeUInt16LE(this.reply_id, 6);
 
-      this.socket.send(buf, 0, buf.length, this.port, this.ip, (err) => {
+      this.socket.send(buf, 0, buf.length, this.port, this.ip, err => {
         if (err) {
           return console.log(err);
         }

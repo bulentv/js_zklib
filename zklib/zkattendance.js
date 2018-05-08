@@ -1,12 +1,14 @@
 const dgram = require('dgram');
+
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
+const { Commands, States } = require('./constants');
 
 module.exports = class {
   getSizeAttendance() {
     const command = this.data_recv.readUInt16LE(0);
 
-    if (command == this.Commands.PREPARE_DATA) {
+    if (command == Commands.PREPARE_DATA) {
       return this.data_recv.readUInt32LE(8);
     } else {
       return 0;
@@ -25,7 +27,7 @@ module.exports = class {
   }
 
   getAttendance(cb) {
-    const command = this.Commands.ATTLOG_RRQ;
+    const command = Commands.ATTLOG_RRQ;
     const command_string = new Buffer([]);
     let chksum = 0;
     const session_id = this.session_id;
@@ -36,7 +38,7 @@ module.exports = class {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    let state = this.States.FIRST_PACKET;
+    let state = States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
 
@@ -51,8 +53,8 @@ module.exports = class {
 
     this.socket.on('message', (reply, remote) => {
       switch (state) {
-        case this.States.FIRST_PACKET:
-          state = this.States.PACKET;
+        case States.FIRST_PACKET:
+          state = States.PACKET;
           this.data_recv = reply;
 
           if (reply && reply.length) {
@@ -71,7 +73,7 @@ module.exports = class {
 
           break;
 
-        case this.States.PACKET:
+        case States.PACKET:
           if (bytes_recv == 0) {
             offset = trim_first;
             bytes_recv = 4;
@@ -96,7 +98,7 @@ module.exports = class {
 
             bytes_recv += attdata_size;
             if (bytes_recv == total_bytes) {
-              state = this.States.FINISHED;
+              state = States.FINISHED;
             }
           }
 
@@ -105,7 +107,7 @@ module.exports = class {
 
           break;
 
-        case this.States.FINISHED:
+        case States.FINISHED:
           this.socket.removeAllListeners('message');
           this.socket.close();
           cb(null, atts);
@@ -117,7 +119,7 @@ module.exports = class {
   }
 
   clearAttendanceLog(cb) {
-    return this.executeCmd(this.Commands.CLEAR_ATTLOG, '', (err, ret) => {
+    return this.executeCmd(Commands.CLEAR_ATTLOG, '', (err, ret) => {
       if (err || !ret || ret.length < 8) return cb(err);
 
       return cb(null);
