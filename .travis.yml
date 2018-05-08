@@ -1,0 +1,21 @@
+# sudo: required
+
+language: node_js
+node_js:
+ - "node"
+
+cache:
+  yarn: true
+
+stages:
+  # - build
+  - test
+  # - deploy
+
+jobs:
+  include:
+    - stage: test
+      install:
+        - yarn
+      script: 
+        - yarn test
