@@ -59,7 +59,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(!this.checkValid(reply), reply);
+        cb(this.checkValid(reply)? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }
@@ -95,7 +95,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(!this.checkValid(reply), reply);
+        cb(this.checkValid(reply)? null : 'Invalid request', reply);
       } else {
         cb('Zero Length Reply');
       }
@@ -124,7 +124,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(!this.checkValid(reply), reply);
+        cb(this.checkValid(reply)? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }

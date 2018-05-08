@@ -118,7 +118,7 @@ module.exports = class {
 
   clearAttendanceLog(cb) {
     return this.executeCmd(this.Commands.CLEAR_ATTLOG, '', (err, ret) => {
-      if (err || !ret || ret.length <= 8) return cb(err);
+      if (err || !ret || ret.length < 8) return cb(err);
 
       return cb(null);
     });

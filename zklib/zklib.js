@@ -68,9 +68,9 @@ class ZKLib {
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
         this.reply_id = reply.readUInt16LE(6);
-        cb && cb(!this.checkValid(reply), reply);
+        cb && cb(this.checkValid(reply) ? null : 'Invalid request', reply);
       } else {
-        cb && cb('zero length reply');
+        cb && cb('Zero length reply');
       }
     });
 
@@ -174,7 +174,7 @@ class ZKLib {
   }
 }
 
-const moduleNames = ['connect', 'serial', 'version', 'time', 'attendance', 'user', 'mon'];
+const moduleNames = ['connect', 'serial', 'version', 'time', 'attendance', 'user', 'mon', 'device'];
 
 const modules = {};
 

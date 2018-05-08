@@ -50,6 +50,8 @@ ZK.connect(function(err) {
 * disconnect() -> Disconnect connection with machine.
 * serialNumber(callback) -> Get serial number machine.
 * version(callback) -> Get version of machine.
+* enableDevice(callback) -> Enable the device.
+* disableDevice(callback) -> Disable the device.
 * getAttendance(callback) -> Get attendance data.
 * clearAttendanceLog(callback) -> Clear the attendance logs from device.
 * getTime(callback) -> Get time of machine.
