@@ -57,12 +57,8 @@ class ZKLib {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    let timeout;
-
     this.socket.once('message', (reply, remote) => {
       this.socket.close();
-
-      timeout && clearTimeout(timeout);
 
       this.data_recv = reply;
 
@@ -75,18 +71,10 @@ class ZKLib {
       }
     });
 
-    this.socket.send(buf, 0, buf.length, this.port, this.ip, err => {
+    this.send(buf, 0, buf.length, err => {
       if (err) {
         cb && cb(err);
         return;
-      }
-
-      if (this.timeout) {
-        timeout = setTimeout(() => {
-          this.socket.close();
-
-          cb && cb(new Error('Timeout error'));
-        }, this.timeout);
       }
     });
   }
@@ -135,6 +123,36 @@ class ZKLib {
   checkValid(reply) {
     const command = reply.readUInt16LE(0);
     return command == Commands.ACK_OK;
+  }
+
+  /**
+   *
+   * @param {String | any[] | Buffer} msg
+   * @param {number} offset
+   * @param {number} length
+   * @param {(error: Error | string) => void} [cb]
+   */
+  send(msg, offset, length, cb) {
+    this.socket.once('message', () => {
+      this.sendTimeoutId && clearTimeout(this.sendTimeoutId);
+
+      cb();
+    });
+
+    this.socket.send(msg, offset, length, this.port, this.ip, err => {
+      if (err) {
+        cb && cb(err);
+        return;
+      }
+
+      if (this.timeout) {
+        this.sendTimeoutId = setTimeout(() => {
+          this.socket.close();
+
+          cb && cb(new Error('Timeout error'));
+        }, this.timeout);
+      }
+    });
   }
 }
 

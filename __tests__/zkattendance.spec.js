@@ -1,5 +1,9 @@
+jest.mock('dgram');
+
 jest.mock('../zklib/att_parser_legacy');
 jest.mock('../zklib/att_parser_v6.60');
+
+const dgram = require('dgram');
 
 const ZKLib = require('../zklib/zklib');
 const attendanceLegacyParser = require('../zklib/att_parser_legacy');
@@ -41,5 +45,22 @@ describe('decodeAttendanceData', () => {
 
     expect(attendanceV660Parser.parse).toBeCalledWith(buffer);
     expect(attendanceLegacyParser.parse).not.toBeCalled();
+  });
+
+  describe('getAttendances', () => {
+    test('when send returns an error it should return', done => {
+      const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'v6.60' });
+
+      zk.data_recv = Buffer.from(new Array(10));
+
+      zk.send = (msg, offset, length, cb) => {
+        cb('some error');
+      };
+
+      zk.getAttendance(err => {
+        expect(err).toBe('some error');
+        done();
+      });
+    });
   });
 });
