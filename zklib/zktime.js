@@ -27,12 +27,12 @@ module.exports = class {
 
   // Deprecation warnings
   gettime(cb) {
-    console.error('gettime() function will deprecated soon, please use getTime()');
+    console.warn('gettime() function will deprecated soon, please use getTime()');
     return this.getTime(cb);
   }
 
   settime(cb) {
-    console.error('settime() function will deprecated soon, please use setTime()');
+    console.warn('settime() function will deprecated soon, please use setTime()');
     return this.setTime(cb);
   }
 };

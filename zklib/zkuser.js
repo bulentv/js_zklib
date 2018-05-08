@@ -235,22 +235,22 @@ module.exports = class {
 
   // Deprecation warnings
   getuser(cb) {
-    console.error('getuser() function will deprecated soon, please use getUser()');
+    console.warn('getuser() function will deprecated soon, please use getUser()');
     return this.getUser(cb);
   }
 
   enrolluser(id, cb) {
-    console.error('enrolluser() function will deprecated soon, please use enrollUser()');
+    console.warn('enrolluser() function will deprecated soon, please use enrollUser()');
     return this.enrollUser(id, cb);
   }
 
   setuser(uid, password = '', name = '', user_id = '', cb) {
-    console.error('setuser() function will deprecated soon, please use setUser()');
+    console.warn('setuser() function will deprecated soon, please use setUser()');
     return this.setUser(uid, password, name, user_id, cb);
   }
 
   deluser(id, cb) {
-    console.error('deluser() function will deprecated soon, please use delUser()');
+    console.warn('deluser() function will deprecated soon, please use delUser()');
     return this.delUser(id, cb);
   }
 };

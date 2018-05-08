@@ -115,7 +115,11 @@ module.exports = class {
       }
     });
 
-    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+    this.send(buf, 0, buf.length, err => {
+      if (err) {
+        cb && cb(err);
+      }
+    });
   }
 
   clearAttendanceLog(cb) {
@@ -128,7 +132,7 @@ module.exports = class {
 
   // Deprecation warnings
   getattendance(cb) {
-    console.error('getattendance() function will deprecated soon, please use getAttendance()');
+    console.warn('getattendance() function will deprecated soon, please use getAttendance()');
     return this.getAttendance(cb);
   }
 };
