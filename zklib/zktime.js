@@ -1,9 +1,11 @@
 const dgram = require('dgram');
+
 const timeParser = require('./timestamp_parser');
+const { Commands } = require('./constants');
 
 module.exports = class {
   getTime(cb) {
-    this.executeCmd(this.Commands.GET_TIME, '', (err, ret) => {
+    this.executeCmd(Commands.GET_TIME, '', (err, ret) => {
       if (err || !ret || ret.length <= 8) return cb(err);
 
       return cb(null, timeParser.decode(ret.readUInt32LE(8)));
@@ -14,7 +16,7 @@ module.exports = class {
     const command_string = new Buffer(4);
     command_string.writeUInt32LE(timeParser.encode(date), 0);
 
-    this.executeCmd(this.Commands.SET_TIME, command_string, (err, ret) => {
+    this.executeCmd(Commands.SET_TIME, command_string, (err, ret) => {
       if (err || !ret || ret.length <= 8) {
         return cb(err);
       }

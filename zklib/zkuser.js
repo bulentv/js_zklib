@@ -1,10 +1,12 @@
 const dgram = require('dgram');
 
+const { Commands, States } = require('./constants');
+
 module.exports = class {
   getSizeUser() {
     const command = this.data_recv.readUInt16LE(0);
 
-    if (command == this.Commands.PREPARE_DATA) {
+    if (command == Commands.PREPARE_DATA) {
       const size = this.data_recv.readUInt32LE(8);
       return size;
     } else {
@@ -38,7 +40,7 @@ module.exports = class {
   }
 
   delUser(id, cb) {
-    const command = this.Commands.DELETE_USER;
+    const command = Commands.DELETE_USER;
     const command_string = new Buffer(2);
 
     command_string.writeUInt16LE(id, 0);
@@ -59,7 +61,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply)? null : 'Invalid request', reply);
+        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }
@@ -69,7 +71,7 @@ module.exports = class {
   }
 
   setUser(uid, password = '', name = '', user_id = '', cb) {
-    const command = this.Commands.USER_WRQ;
+    const command = Commands.USER_WRQ;
     const command_string = new Buffer(72);
 
     command_string.writeUInt16LE(uid, 0);
@@ -95,7 +97,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply)? null : 'Invalid request', reply);
+        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('Zero Length Reply');
       }
@@ -105,7 +107,7 @@ module.exports = class {
   }
 
   enrollUser(id, cb) {
-    const command = this.Commands.START_ENROLL;
+    const command = Commands.START_ENROLL;
     const command_string = new Buffer(2);
 
     command_string.write(id);
@@ -124,7 +126,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply)? null : 'Invalid request', reply);
+        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }
@@ -134,7 +136,7 @@ module.exports = class {
   }
 
   getUser(cb) {
-    const command = this.Commands.USERTEMP_RRQ;
+    const command = Commands.USERTEMP_RRQ;
     const command_string = new Buffer([0x05]);
 
     let chksum = 0;
@@ -147,7 +149,7 @@ module.exports = class {
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
 
-    let state = this.States.FIRST_PACKET;
+    let state = States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
     let rem = new Buffer([]);
@@ -160,8 +162,8 @@ module.exports = class {
 
     this.socket.on('message', (reply, remote) => {
       switch (state) {
-        case this.States.FIRST_PACKET:
-          state = this.States.PACKET;
+        case States.FIRST_PACKET:
+          state = States.PACKET;
 
           this.data_recv = reply;
 
@@ -182,7 +184,7 @@ module.exports = class {
 
           break;
 
-        case this.States.PACKET:
+        case States.PACKET:
           if (bytes_recv == 0) {
             offset = trim_first;
             bytes_recv = 4;
@@ -209,7 +211,7 @@ module.exports = class {
             bytes_recv += userdata_size;
 
             if (bytes_recv == total_bytes) {
-              state = this.States.FINISHED;
+              state = States.FINISHED;
             }
           }
 
@@ -218,7 +220,7 @@ module.exports = class {
 
           break;
 
-        case this.States.FINISHED:
+        case States.FINISHED:
           this.socket.removeAllListeners('message');
           this.socket.close();
 
