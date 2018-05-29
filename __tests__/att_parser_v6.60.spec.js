@@ -1,4 +1,7 @@
-const { name, parse } = require('../zklib/att_parser_v6.60');
+const {
+  name,
+  parse
+} = require('../zklib/att_parser_v6.60');
 
 test('name should be v6.60', () => {
   expect(name).toBe('v6.60');
@@ -12,6 +15,26 @@ describe('parse', () => {
       ...[0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x58, 0x0d, 0x04, 0x23, 0x01]
     ]);
 
-    expect(parse(buffer)).toEqual({ id: 282, uid: 4, state: 1, timestamp: new Date(2018, 4 - 1, 11, 9, 35, 20, 0) });
+    expect(parse(buffer)).toEqual({
+      id: 282,
+      uid: 4,
+      state: 1,
+      timestamp: new Date(2018, 4 - 1, 11, 9, 35, 20, 0)
+    });
+  });
+
+  test('should return a attendance with a large uid', () => {
+    const buffer = new Buffer([
+      ...[0x00, 0x00, 0x1a, 0x01, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39],
+      ...[0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      ...[0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x58, 0x0d, 0x04, 0x23, 0x01]
+    ]);
+
+    expect(parse(buffer)).toEqual({
+      id: 282,
+      uid: 999999999,
+      state: 1,
+      timestamp: new Date(2018, 4 - 1, 11, 9, 35, 20, 0)
+    });
   });
 });
