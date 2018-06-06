@@ -2,8 +2,8 @@ const dgram = require('dgram');
 
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
-const { Commands, States } = require('./constants');
-const { createHeader} = require('./utils');
+const {Commands, States} = require('./constants');
+const {createHeader} = require('./utils');
 
 module.exports = class {
   getSizeAttendance() {
@@ -29,11 +29,10 @@ module.exports = class {
 
   getAttendance(cb) {
     const command = Commands.ATTLOG_RRQ;
-    const command_string = Buffer.from([]);
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = createHeader(command,  session_id, reply_id, command_string);
+    const buf = createHeader(command, session_id, reply_id, []);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);

@@ -3,8 +3,8 @@ const dgram = require('dgram');
 const mixin = require('./mixin');
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
-const { defaultTo,createHeader,checkValid } = require('./utils');
-const { Commands, USHRT_MAX } = require('./constants');
+const {defaultTo, createHeader, checkValid} = require('./utils');
+const {Commands, USHRT_MAX} = require('./constants');
 
 class ZKLib {
   /**
@@ -45,12 +45,12 @@ class ZKLib {
     }
   }
 
-  executeCmd(command, command_string, cb) {
+  executeCmd(command, data, cb) {
     if (command == Commands.CONNECT) {
       this.reply_id = -1 + USHRT_MAX;
     }
 
-    const buf = createHeader(command, this.session_id, this.reply_id, command_string);
+    const buf = createHeader(command, this.session_id, this.reply_id, data);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -76,48 +76,6 @@ class ZKLib {
       }
     });
   }
-
-  // createHeader(command,  session_id, reply_id, command_string) {
-  //   const buf_command_string = new Buffer(command_string);
-  //   const buf = new Buffer(8 + buf_command_string.length);
-
-  //   buf.writeUInt16LE(command, 0);
-  //   buf.writeUInt16LE(0, 2);
-  //   buf.writeUInt16LE(session_id, 4);
-  //   buf.writeUInt16LE(reply_id, 6);
-
-  //   buf_command_string.copy(buf, 8);
-
-  //   const chksum2 = this.createChkSum(buf);
-  //   buf.writeUInt16LE(chksum2, 2);
-
-  //   reply_id = (reply_id + 1) % USHRT_MAX;
-  //   buf.writeUInt16LE(reply_id, 6);
-
-  //   return buf;
-  // }
-
-  // createChkSum(p) {
-  //   let chksum = 0;
-
-  //   for (let i = 0; i < p.length; i += 2) {
-  //     if (i == p.length - 1) {
-  //       chksum += p[i];
-  //     } else {
-  //       chksum += p.readUInt16LE(i);
-  //     }
-  //     chksum %= USHRT_MAX;
-  //   }
-
-  //   chksum = USHRT_MAX - chksum - 1;
-
-  //   return chksum;
-  // }
-
-  // checkValid(reply) {
-  //   const command = reply.readUInt16LE(0);
-  //   return command == Commands.ACK_OK;
-  // }
 
   /**
    *

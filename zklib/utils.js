@@ -1,17 +1,18 @@
-const { Commands, USHRT_MAX } = require('./constants');
+const {Commands, USHRT_MAX} = require('./constants');
 
 exports.defaultTo = (value, defaultValue) => {
   return value !== undefined ? value : defaultValue;
-}
+};
 
 /**
- * 
- * @param {number} command 
- * @param {number} session_id 
- * @param {number} reply_id 
- * @param {string | Buffer} data 
+ *
+ * @param {number} command
+ * @param {number} session_id
+ * @param {number} reply_id
+ * @param {string | Array | Buffer} data
+ * @returns {Buffer}
  */
-exports.createHeader = (command,  session_id, reply_id, data) => {
+exports.createHeader = (command, session_id, reply_id, data) => {
   const dataBuffer = Buffer.from(data);
   const buf = new Buffer(8 + dataBuffer.length);
 
@@ -29,17 +30,23 @@ exports.createHeader = (command,  session_id, reply_id, data) => {
   buf.writeUInt16LE(reply_id, 6);
 
   return buf;
-}
+};
 
-const createChkSum = (p) => {
+/**
+ *
+ * @param {Buffer} buf
+ * @returns {number}
+ */
+function createChkSum(buf) {
   let chksum = 0;
 
-  for (let i = 0; i < p.length; i += 2) {
-    if (i == p.length - 1) {
-      chksum += p[i];
+  for (let i = 0; i < buf.length; i += 2) {
+    if (i == buf.length - 1) {
+      chksum += buf[i];
     } else {
-      chksum += p.readUInt16LE(i);
+      chksum += buf.readUInt16LE(i);
     }
+
     chksum %= USHRT_MAX;
   }
 
@@ -48,9 +55,14 @@ const createChkSum = (p) => {
   return chksum;
 }
 
-exports.createChkSum = createChkSum
+exports.createChkSum = createChkSum;
 
-exports.checkValid = (reply)=> {
-  const command = reply.readUInt16LE(0);
+/**
+ *
+ * @param {Buffer} buf
+ * @returns {boolean}
+ */
+exports.checkValid = buf => {
+  const command = buf.readUInt16LE(0);
   return command == Commands.ACK_OK;
-}
+};
