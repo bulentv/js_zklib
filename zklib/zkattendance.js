@@ -34,8 +34,7 @@ module.exports = class {
 
     const buf = createHeader(command, session_id, reply_id, []);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
@@ -61,9 +60,7 @@ module.exports = class {
             total_bytes = this.getSizeAttendance();
 
             if (total_bytes <= 0) {
-              this.socket.removeAllListeners('message');
-              this.socket.close();
-              this.socket = null;
+              this.closeSocket();
               cb('zero');
             }
           } else {
@@ -107,8 +104,7 @@ module.exports = class {
           break;
 
         case States.FINISHED:
-          this.socket.removeAllListeners('message');
-          this.socket.close();
+          this.closeSocket();
           cb(null, atts);
           break;
       }

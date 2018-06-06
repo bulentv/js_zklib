@@ -6,7 +6,8 @@ dgram.createSocket = jest.fn(() => {
     once: jest.fn(() => {}),
     on: jest.fn(() => {}),
     close: jest.fn(() => {}),
-    send: jest.fn(() => {})
+    send: jest.fn(() => {}),
+    removeAllListeners: jest.fn(() => {})
   };
 });
 

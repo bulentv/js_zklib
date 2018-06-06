@@ -1,7 +1,7 @@
 const dgram = require('dgram');
 
-const {createChkSum } = require('./utils');
-const { Commands, USHRT_MAX } = require('./constants');
+const {createChkSum} = require('./utils');
+const {Commands, USHRT_MAX} = require('./constants');
 
 module.exports = class {
   decodeAttLog(buf) {
@@ -17,8 +17,7 @@ module.exports = class {
     this.connect(err => {
       //console.log(this.ip + ":" + this.port + " s:" + ret.toString("hex"));
 
-      this.socket = dgram.createSocket('udp4');
-      this.socket.bind(this.inport);
+      this.createSocket();
 
       this.socket.on('message', ret => {
         //console.log(this.ip + ":" + this.port + " s:" + ret.toString("hex"));
