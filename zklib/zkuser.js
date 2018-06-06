@@ -50,8 +50,7 @@ module.exports = class {
     const reply_id = this.data_recv.readUInt16LE(6);
     const buf = createHeader(command, session_id, reply_id, command_string);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     this.socket.once('message', (reply, remote) => {
       this.closeSocket();
@@ -86,8 +85,7 @@ module.exports = class {
 
     const buf = createHeader(command, session_id, reply_id, command_string);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     this.socket.once('message', (reply, remote) => {
       this.closeSocket();
@@ -115,8 +113,7 @@ module.exports = class {
     const reply_id = this.data_recv.readUInt16LE(6);
     const buf = createHeader(command, session_id, reply_id, command_string);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     this.socket.once('message', (reply, remote) => {
       this.closeSocket();
@@ -147,8 +144,7 @@ module.exports = class {
 
     const buf = createHeader(command, session_id, reply_id, command_string);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;

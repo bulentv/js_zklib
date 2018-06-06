@@ -34,8 +34,7 @@ module.exports = class {
 
     const buf = createHeader(command, session_id, reply_id, []);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;

@@ -52,8 +52,7 @@ class ZKLib {
 
     const buf = createHeader(command, this.session_id, this.reply_id, data);
 
-    this.socket = dgram.createSocket('udp4');
-    this.socket.bind(this.inport);
+    this.createSocket();
 
     this.socket.once('message', (reply, remote) => {
       this.closeSocket();
@@ -105,6 +104,11 @@ class ZKLib {
         }, this.timeout);
       }
     });
+  }
+
+  createSocket() {
+    this.socket = dgram.createSocket('udp4');
+    this.socket.bind(this.inport);
   }
 
   closeSocket() {
