@@ -56,7 +56,7 @@ class ZKLib {
     this.socket.bind(this.inport);
 
     this.socket.once('message', (reply, remote) => {
-      this.socket.close();
+      this.closeSocket();
 
       this.data_recv = reply;
 
@@ -79,7 +79,7 @@ class ZKLib {
 
   /**
    *
-   * @param {String | any[] | Buffer} msg
+   * @param {String | Array | Buffer} msg
    * @param {number} offset
    * @param {number} length
    * @param {(error: Error | string) => void} [cb]
@@ -99,12 +99,17 @@ class ZKLib {
 
       if (this.timeout) {
         this.sendTimeoutId = setTimeout(() => {
-          this.socket.close();
+          this.closeSocket();
 
           cb && cb(new Error('Timeout error'));
         }, this.timeout);
       }
     });
+  }
+
+  closeSocket() {
+    this.socket.removeAllListeners('message');
+    this.socket.close();
   }
 }
 

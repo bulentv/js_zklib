@@ -1,7 +1,7 @@
 const dgram = require('dgram');
 
-const { Commands, States } = require('./constants');
-const { createHeader,checkValid } = require('./utils');
+const {Commands, States} = require('./constants');
+const {createHeader, checkValid} = require('./utils');
 
 module.exports = class {
   getSizeUser() {
@@ -54,7 +54,7 @@ module.exports = class {
     this.socket.bind(this.inport);
 
     this.socket.once('message', (reply, remote) => {
-      this.socket.close();
+      this.closeSocket();
 
       this.data_recv = reply;
 
@@ -90,7 +90,8 @@ module.exports = class {
     this.socket.bind(this.inport);
 
     this.socket.once('message', (reply, remote) => {
-      this.socket.close();
+      this.closeSocket();
+
       this.data_recv = reply;
 
       if (reply && reply.length) {
@@ -118,7 +119,8 @@ module.exports = class {
     this.socket.bind(this.inport);
 
     this.socket.once('message', (reply, remote) => {
-      this.socket.close();
+      this.closeSocket();
+
       this.data_recv = reply;
 
       if (reply && reply.length) {
@@ -132,6 +134,10 @@ module.exports = class {
     this.socket.send(buf, 0, buf.length, this.port, this.ip);
   }
 
+  /**
+   *
+   * @param {(err: Error, users: object[]) => void} cb
+   */
   getUser(cb) {
     const command = Commands.USERTEMP_RRQ;
     const command_string = Buffer.from([0x05]);
@@ -168,13 +174,12 @@ module.exports = class {
             total_bytes = this.getSizeUser();
 
             if (total_bytes <= 0) {
-              this.socket.removeAllListeners('message');
-              this.socket.close();
+              this.closeSocket();
 
-              return cb('no data');
+              return cb(new Error('no data'));
             }
           } else {
-            cb('zero length reply');
+            cb(new Error('zero length reply'));
           }
 
           break;
@@ -216,8 +221,7 @@ module.exports = class {
           break;
 
         case States.FINISHED:
-          this.socket.removeAllListeners('message');
-          this.socket.close();
+          this.closeSocket();
 
           cb(null, users);
 

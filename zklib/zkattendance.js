@@ -61,9 +61,7 @@ module.exports = class {
             total_bytes = this.getSizeAttendance();
 
             if (total_bytes <= 0) {
-              this.socket.removeAllListeners('message');
-              this.socket.close();
-              this.socket = null;
+              this.closeSocket();
               cb('zero');
             }
           } else {
@@ -107,8 +105,7 @@ module.exports = class {
           break;
 
         case States.FINISHED:
-          this.socket.removeAllListeners('message');
-          this.socket.close();
+          this.closeSocket();
           cb(null, atts);
           break;
       }
