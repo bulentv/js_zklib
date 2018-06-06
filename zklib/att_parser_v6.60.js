@@ -6,10 +6,6 @@ const uidIndex = 4;
 const uidLength = 9;
 
 /**
- * @external Buffer
- */
-
-/**
   @typedef Attendance
   @type {object}
   @property {number} id - The ID of the Attendance
@@ -22,7 +18,7 @@ const uidLength = 9;
 
 /**
  * 
- * @param {external:Buffer} attdata 
+ * @param {Buffer} attdata 
  * @returns {Attendance} Returns an Attendance
  */
 module.exports.parse = attdata => ({
