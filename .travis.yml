@@ -1,21 +1,22 @@
-# sudo: required
-
 language: node_js
 node_js:
- - "node"
-
+- node
 cache:
   yarn: true
-
 stages:
-  # - build
-  - test
-  # - deploy
-
+- test
 jobs:
   include:
-    - stage: test
-      install:
-        - yarn
-      script: 
-        - yarn test
+  - stage: test
+    install:
+    - yarn
+    script:
+    - yarn test
+deploy:
+  provider: npm
+  email: bulentv@gmail.com
+  api_key:
+    secure: E/Ngj5sTVQYyFPkyYzq2i4ggkhL3bJuuyms/J45vvR0nRlGilyQS+ZKGx6lraLE9ziKr9oSyqy+Xx7vIXxc1NTlsHS/nG4YmT4pq0520lx7h2ENHlp5srzG4bGjrzELVF5yR5yNuFsCxWV3Gp7J+iclysFBNPu/mM1lqRJEBG4VV1iC29keknsIq0O3tME+XDZU9CRdA8l1BHaZIcallBv34p9vL8NdqhaEFzXwdvyqxFOtbMkCLPy5FAVA5wLTzVX2BUS286fUFIcUl8VzJ6fov4RCH/hlsABKIBVMjRwtscB0oWwVNrCb7SwjE1I1KzajVYw+2LqILu7a4VthJHywY7i9emIyjlJwvnSDAYmSQqEXLAwVSOMouSRHV+dRfdSjO7dJP1GqriwmW8RsO49oW/26/iXr7EY7Crt3mes8IAoaE97G9bqlCaZ0z9KdndbBKWj5COvOgoaDUt+XXA0MYuIAk9aKoAROp9KK/aXGu8zR2vuoOwTUA8WDfD7GPoNH8PWf8+iDZozpQ6VJkkfsGUIi1Fw0wwNdgTPeA9PXfksZ3DJJDy2TD6pYXusQnbA9AMP8+o9kJ0Y4qpiKYx+5R029Ua2SonmQZ2sjO9xGnMMQBCpRVauxO3O5L/Zk352UjnlNRXHTLFCCmj/Je422mmGse/VhanD2c4KHbb6A=
+  on:
+    tags: true
+    repo: bulentv/js_zklib
