@@ -17,7 +17,7 @@ describe('decodeAttendanceData', () => {
   test('when no attendanceParser option is specify it should use the legacy parser', () => {
     const zk = new ZKLib({ ip: '123', inport: 123 });
 
-    const buffer = new Buffer([]);
+    const buffer =Buffer.from([]);
 
     zk.decodeAttendanceData(buffer);
 
@@ -28,7 +28,7 @@ describe('decodeAttendanceData', () => {
   test('when the attendanceParser option is legacy it should use the legacy parser', () => {
     const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'legacy' });
 
-    const buffer = new Buffer([]);
+    const buffer =Buffer.from([]);
 
     zk.decodeAttendanceData(buffer);
 
@@ -39,7 +39,7 @@ describe('decodeAttendanceData', () => {
   test('when the attendanceParser option is v6.60 it should use the v6.60 parser', () => {
     const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'v6.60' });
 
-    const buffer = new Buffer([]);
+    const buffer = Buffer.from([]);
 
     zk.decodeAttendanceData(buffer);
 

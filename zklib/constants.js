@@ -34,3 +34,5 @@ exports.States = Object.freeze({
   PACKET: 2,
   FINISHED: 3
 });
+
+exports.USHRT_MAX = 65535;

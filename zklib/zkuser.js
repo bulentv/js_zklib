@@ -1,6 +1,7 @@
 const dgram = require('dgram');
 
 const { Commands, States } = require('./constants');
+const { createHeader,checkValid } = require('./utils');
 
 module.exports = class {
   getSizeUser() {
@@ -45,11 +46,9 @@ module.exports = class {
 
     command_string.writeUInt16LE(id, 0);
 
-    let chksum = 0;
-
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
-    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
+    const buf = createHeader(command, session_id, reply_id, command_string);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -61,7 +60,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
+        cb(checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }
@@ -82,11 +81,10 @@ module.exports = class {
     command_string.writeUInt32LE(0, 40);
     command_string.write(user_id.toString(10), 48);
 
-    let chksum = 0;
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
+    const buf = createHeader(command, session_id, reply_id, command_string);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -97,7 +95,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
+        cb(checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('Zero Length Reply');
       }
@@ -112,10 +110,9 @@ module.exports = class {
 
     command_string.write(id);
 
-    let chksum = 0;
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
-    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
+    const buf = createHeader(command, session_id, reply_id, command_string);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -126,7 +123,7 @@ module.exports = class {
 
       if (reply && reply.length) {
         this.session_id = reply.readUInt16LE(4);
-        cb(this.checkValid(reply) ? null : 'Invalid request', reply);
+        cb(checkValid(reply) ? null : 'Invalid request', reply);
       } else {
         cb('zero length reply');
       }
@@ -137,14 +134,12 @@ module.exports = class {
 
   getUser(cb) {
     const command = Commands.USERTEMP_RRQ;
-    const command_string = new Buffer([0x05]);
-
-    let chksum = 0;
+    const command_string = Buffer.from([0x05]);
 
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
+    const buf = createHeader(command, session_id, reply_id, command_string);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -152,7 +147,7 @@ module.exports = class {
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
-    let rem = new Buffer([]);
+    let rem = Buffer.from([]);
     let offset = 0;
 
     const userdata_size = 72;
@@ -199,7 +194,7 @@ module.exports = class {
               rem.copy(userdata);
               reply.copy(userdata, rem.length, offset);
               offset += userdata_size - rem.length;
-              rem = new Buffer([]);
+              rem = Buffer.from([]);
             } else {
               reply.copy(userdata, 0, offset);
               offset += userdata_size;

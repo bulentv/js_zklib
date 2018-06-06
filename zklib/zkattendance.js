@@ -3,6 +3,7 @@ const dgram = require('dgram');
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
 const { Commands, States } = require('./constants');
+const { createHeader} = require('./utils');
 
 module.exports = class {
   getSizeAttendance() {
@@ -28,12 +29,11 @@ module.exports = class {
 
   getAttendance(cb) {
     const command = Commands.ATTLOG_RRQ;
-    const command_string = new Buffer([]);
-    let chksum = 0;
+    const command_string = Buffer.from([]);
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = this.createHeader(command, chksum, session_id, reply_id, command_string);
+    const buf = createHeader(command,  session_id, reply_id, command_string);
 
     this.socket = dgram.createSocket('udp4');
     this.socket.bind(this.inport);
@@ -42,7 +42,7 @@ module.exports = class {
     let total_bytes = 0;
     let bytes_recv = 0;
 
-    let rem = new Buffer([]);
+    let rem = Buffer.from([]);
     let offset = 0;
 
     const attdata_size = 40;
@@ -87,7 +87,7 @@ module.exports = class {
               rem.copy(attdata);
               reply.copy(attdata, rem.length, offset);
               offset += attdata_size - rem.length;
-              rem = new Buffer([]);
+              rem = Buffer.from([]);
             } else {
               reply.copy(attdata, 0, offset);
               offset += attdata_size;

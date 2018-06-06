@@ -1,6 +1,7 @@
 const dgram = require('dgram');
 
-const { Commands } = require('./constants');
+const {createChkSum } = require('./utils');
+const { Commands, USHRT_MAX } = require('./constants');
 
 module.exports = class {
   decodeAttLog(buf) {
@@ -38,9 +39,9 @@ module.exports = class {
       buf.writeUInt16LE(this.reply_id, 6);
       buf.writeUInt32LE(0x0000ffff, 8);
 
-      const chksum = this.createChkSum(buf);
+      const chksum = createChkSum(buf);
       buf.writeUInt16LE(chksum, 2);
-      this.reply_id = (this.reply_id + 1) % this.USHRT_MAX;
+      this.reply_id = (this.reply_id + 1) % USHRT_MAX;
       buf.writeUInt16LE(this.reply_id, 6);
 
       this.socket.send(buf, 0, buf.length, this.port, this.ip, err => {

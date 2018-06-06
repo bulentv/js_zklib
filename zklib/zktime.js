@@ -2,6 +2,7 @@ const dgram = require('dgram');
 
 const timeParser = require('./timestamp_parser');
 const { Commands } = require('./constants');
+const { checkValid } = require('./utils');
 
 module.exports = class {
   getTime(cb) {
@@ -21,7 +22,7 @@ module.exports = class {
         return cb(err);
       }
 
-      return cb(this.checkValid(ret) ? null : 'Invalid request', ret);
+      return cb(checkValid(ret) ? null : 'Invalid request', ret);
     });
   }
 
