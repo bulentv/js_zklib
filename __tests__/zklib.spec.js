@@ -107,18 +107,13 @@ describe('executeCmd', () => {
   test('when socket send returns an error it should return same error', done => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', timeout: 5});
 
-    const socket = dgram.createSocket();
+    zk.socket = dgram.createSocket('udp4');
 
-    dgram.createSocket = jest.fn(() => {
-      return {
-        ...socket,
-        send: jest.fn((msg, offset, length, port, ip, cb) => {
-          cb('some error');
-        })
-      };
+    zk.socket.send = jest.fn((msg, offset, length, port, ip, cb) => {
+      cb('some error');
     });
 
-    zk.executeCmd('cmd', '', err => {
+    zk.executeCmd(1234, '', err => {
       expect(err).toBe('some error');
       done();
     });
@@ -127,18 +122,13 @@ describe('executeCmd', () => {
   test('when the device does not respond it should return timeout error', done => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', timeout: 5});
 
-    const socket = dgram.createSocket();
+    zk.socket = dgram.createSocket('udp4');
 
-    dgram.createSocket = jest.fn(() => {
-      return {
-        ...socket,
-        send: jest.fn((msg, offset, length, port, ip, cb) => {
-          cb();
-        })
-      };
+    zk.socket.send = jest.fn((msg, offset, length, port, ip, cb) => {
+      cb();
     });
 
-    zk.executeCmd('cmd', '', err => {
+    zk.executeCmd(12, '', err => {
       expect(err).toEqual(new Error('Timeout error'));
       done();
     });
@@ -147,22 +137,17 @@ describe('executeCmd', () => {
   test('when the device responds with an empty msg it should return an error', done => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', timeout: 10});
 
-    const socket = dgram.createSocket();
+    zk.socket = dgram.createSocket('udp4');
 
-    dgram.createSocket = jest.fn(() => {
-      return {
-        ...socket,
-        once: jest.fn((eventType, cb) => {
-          setTimeout(() => cb(), 5);
-        }),
-        send: jest.fn((msg, offset, length, port, ip, cb) => {
-          cb();
-        })
-      };
+    zk.socket.send = jest.fn((msg, offset, length, port, ip, cb) => {
+      cb();
+    });
+    zk.socket.once = jest.fn((eventType, cb) => {
+      setTimeout(() => cb(), 5);
     });
 
-    zk.executeCmd('cmd', '', err => {
-      expect(err).toEqual('Zero length reply');
+    zk.executeCmd(12, '', err => {
+      expect(err).toEqual(new Error('Invalid length reply'));
       done();
     });
   });
@@ -170,22 +155,17 @@ describe('executeCmd', () => {
   test('when the device does respond but its not valid it should return an error', done => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', timeout: 10});
 
-    const socket = dgram.createSocket();
+    zk.socket = dgram.createSocket('udp4');
 
-    dgram.createSocket = jest.fn(() => {
-      return {
-        ...socket,
-        once: jest.fn((eventType, cb) => {
-          setTimeout(() => cb(Buffer.from(new Array(10))), 5);
-        }),
-        send: jest.fn((msg, offset, length, port, ip, cb) => {
-          cb();
-        })
-      };
+    zk.socket.send = jest.fn((msg, offset, length, port, ip, cb) => {
+      cb();
+    });
+    zk.socket.once = jest.fn((eventType, cb) => {
+      setTimeout(() => cb(Buffer.from(new Array(10))), 5);
     });
 
-    zk.executeCmd('cmd', '', err => {
-      expect(err).toEqual('Invalid request');
+    zk.executeCmd(12, '', err => {
+      expect(err).toEqual(new Error('Invalid request'));
       done();
     });
   });
@@ -193,21 +173,16 @@ describe('executeCmd', () => {
   test('when the device does respond it should not return an error', done => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', timeout: 10});
 
-    const socket = dgram.createSocket();
+    zk.socket = dgram.createSocket('udp4');
 
-    dgram.createSocket = jest.fn(() => {
-      return {
-        ...socket,
-        once: jest.fn((eventType, cb) => {
-          setTimeout(() => cb(Buffer.from([0xd0, 0x07, 1, 2, 3, 4, 5, 6])), 5);
-        }),
-        send: jest.fn((msg, offset, length, port, ip, cb) => {
-          cb();
-        })
-      };
+    zk.socket.send = jest.fn((msg, offset, length, port, ip, cb) => {
+      cb();
+    });
+    zk.socket.once = jest.fn((eventType, cb) => {
+      setTimeout(() => cb(Buffer.from([0xd0, 0x07, 1, 2, 3, 4, 5, 6])), 5);
     });
 
-    zk.executeCmd('cmd', '', (err, reply) => {
+    zk.executeCmd(12, '', (err, reply) => {
       expect(err).toBeFalsy();
       expect(reply.length).toBe(8);
       done();

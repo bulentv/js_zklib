@@ -3,7 +3,11 @@ const dgram = require('dgram');
 const {Commands, States} = require('./constants');
 const {createHeader, checkValid} = require('./utils');
 
-module.exports = class {
+/**
+ *
+ * @extends ZKLib
+ */
+class ZkUser {
   getSizeUser() {
     const command = this.data_recv.readUInt16LE(0);
 
@@ -15,6 +19,10 @@ module.exports = class {
     }
   }
 
+  /**
+   *
+   * @param {Buffer} userdata
+   */
   decodeUserData(userdata) {
     const user = {
       uid: userdata.readUInt16BE(0),
@@ -40,37 +48,29 @@ module.exports = class {
     return user;
   }
 
-  delUser(id, cb) {
-    const command = Commands.DELETE_USER;
-    const command_string = new Buffer(2);
+  /**
+   *
+   * @param {number} uid
+   * @param {(err: Error) => void} cb
+   */
+  delUser(uid, cb) {
+    const command_string = Buffer.alloc(2);
 
-    command_string.writeUInt16LE(id, 0);
+    command_string.writeUInt16LE(uid, 0);
 
-    const session_id = this.session_id;
-    const reply_id = this.data_recv.readUInt16LE(6);
-    const buf = createHeader(command, session_id, reply_id, command_string);
-
-    this.createSocket();
-
-    this.socket.once('message', (reply, remote) => {
-      this.closeSocket();
-
-      this.data_recv = reply;
-
-      if (reply && reply.length) {
-        this.session_id = reply.readUInt16LE(4);
-        cb(checkValid(reply) ? null : 'Invalid request', reply);
-      } else {
-        cb('zero length reply');
-      }
-    });
-
-    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+    this.executeCmd(Commands.DELETE_USER, command_string, cb);
   }
 
-  setUser(uid, password = '', name = '', user_id = '', cb) {
-    const command = Commands.USER_WRQ;
-    const command_string = new Buffer(72);
+  /**
+   *
+   * @param {number} uid
+   * @param {string} password
+   * @param {string} name
+   * @param {number} user_id
+   * @param {(err: Error) => void} cb
+   */
+  setUser(uid, password = '', name = '', user_id, cb) {
+    const command_string = Buffer.alloc(72);
 
     command_string.writeUInt16LE(uid, 0);
     command_string[2] = 0;
@@ -78,57 +78,23 @@ module.exports = class {
     command_string.write(name, 11, 39);
     command_string[39] = 1;
     command_string.writeUInt32LE(0, 40);
-    command_string.write(user_id.toString(10), 48);
+    command_string.write(user_id ? user_id.toString(10) : '', 48);
 
-    const session_id = this.session_id;
-    const reply_id = this.data_recv.readUInt16LE(6);
-
-    const buf = createHeader(command, session_id, reply_id, command_string);
-
-    this.createSocket();
-
-    this.socket.once('message', (reply, remote) => {
-      this.closeSocket();
-
-      this.data_recv = reply;
-
-      if (reply && reply.length) {
-        this.session_id = reply.readUInt16LE(4);
-        cb(checkValid(reply) ? null : 'Invalid request', reply);
-      } else {
-        cb('Zero Length Reply');
-      }
-    });
-
-    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+    this.executeCmd(Commands.USER_WRQ, command_string, cb);
   }
 
-  enrollUser(id, cb) {
+  /**
+   *
+   * @param {number} uid
+   * @param {(err: Error) => void} cb
+   */
+  enrollUser(uid, cb) {
     const command = Commands.START_ENROLL;
     const command_string = new Buffer(2);
 
-    command_string.write(id);
+    command_string.write(uid.toString());
 
-    const session_id = this.session_id;
-    const reply_id = this.data_recv.readUInt16LE(6);
-    const buf = createHeader(command, session_id, reply_id, command_string);
-
-    this.createSocket();
-
-    this.socket.once('message', (reply, remote) => {
-      this.closeSocket();
-
-      this.data_recv = reply;
-
-      if (reply && reply.length) {
-        this.session_id = reply.readUInt16LE(4);
-        cb(checkValid(reply) ? null : 'Invalid request', reply);
-      } else {
-        cb('zero length reply');
-      }
-    });
-
-    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+    this.executeCmd(Commands.START_ENROLL, command_string, cb);
   }
 
   /**
@@ -136,15 +102,14 @@ module.exports = class {
    * @param {(err: Error, users: object[]) => void} cb
    */
   getUser(cb) {
-    const command = Commands.USERTEMP_RRQ;
     const command_string = Buffer.from([0x05]);
 
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = createHeader(command, session_id, reply_id, command_string);
+    const buf = createHeader(Commands.USERTEMP_RRQ, session_id, reply_id, command_string);
 
-    this.createSocket();
+    // this.createSocket();
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
@@ -157,7 +122,13 @@ module.exports = class {
     const trim_others = 8;
     const users = [];
 
-    this.socket.on('message', (reply, remote) => {
+    const internalCallback = (err, data) => {
+      this.socket.removeListener(this.DATA_EVENT, handleOnData);
+
+      cb(err, data);
+    };
+
+    const handleOnData = (reply, remote) => {
       switch (state) {
         case States.FIRST_PACKET:
           state = States.PACKET;
@@ -170,12 +141,12 @@ module.exports = class {
             total_bytes = this.getSizeUser();
 
             if (total_bytes <= 0) {
-              this.closeSocket();
+              // this.closeSocket();
 
-              return cb(new Error('no data'));
+              return internalCallback(new Error('no data'));
             }
           } else {
-            cb(new Error('zero length reply'));
+            internalCallback(new Error('zero length reply'));
           }
 
           break;
@@ -217,35 +188,54 @@ module.exports = class {
           break;
 
         case States.FINISHED:
-          this.closeSocket();
+          // this.closeSocket();
 
-          cb(null, users);
+          internalCallback(null, users);
 
           break;
       }
-    });
+    };
 
-    this.socket.send(buf, 0, buf.length, this.port, this.ip);
+    this.socket.on(this.DATA_EVENT, handleOnData);
+
+    this.send(buf, 0, buf.length, err => {
+      if (err) {
+        internalCallback && internalCallback(err);
+      }
+    });
   }
 
-  // Deprecation warnings
+  /**
+   * @deprecated since version 0.2.0. Use getUser instead
+   */
   getuser(cb) {
     console.warn('getuser() function will deprecated soon, please use getUser()');
     return this.getUser(cb);
   }
 
+  /**
+   * @deprecated since version 0.2.0. Use enrollUser instead
+   */
   enrolluser(id, cb) {
     console.warn('enrolluser() function will deprecated soon, please use enrollUser()');
     return this.enrollUser(id, cb);
   }
 
+  /**
+   * @deprecated since version 0.2.0. Use setUser instead
+   */
   setuser(uid, password = '', name = '', user_id = '', cb) {
     console.warn('setuser() function will deprecated soon, please use setUser()');
     return this.setUser(uid, password, name, user_id, cb);
   }
 
+  /**
+   * @deprecated since version 0.2.0. Use delUser instead
+   */
   deluser(id, cb) {
     console.warn('deluser() function will deprecated soon, please use delUser()');
     return this.delUser(id, cb);
   }
-};
+}
+
+module.exports = ZkUser;

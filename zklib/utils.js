@@ -9,7 +9,7 @@ exports.defaultTo = (value, defaultValue) => {
  * @param {number} command
  * @param {number} session_id
  * @param {number} reply_id
- * @param {string | Array | Buffer} data
+ * @param {string | Uint8Array | Buffer} data
  * @returns {Buffer}
  */
 exports.createHeader = (command, session_id, reply_id, data) => {

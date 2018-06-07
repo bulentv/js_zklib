@@ -20,13 +20,16 @@ done
 
 NEW_VERSION="${NEW_VERSION:-"patch"}"
 
-echo NEW_VERSION = "${NEW_VERSION}"
-
-yarn version --new-version $NEW_VERSION
+yarn version --new-version $NEW_VERSION --no-git-tag-version
 
 VERSION=$(node -p -e "require('./package.json').version")
 
 git checkout -b "$VERSION"
+git add .
+git commit -m "v$VERSION"
+
+git tag -a "v$VERSION" -m "v$VERSION"
+
 git push origin "$VERSION" --follow-tags
 
 git checkout master
