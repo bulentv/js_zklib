@@ -1,17 +1,14 @@
 language: node_js
+
 node_js:
 - node
+
 cache:
   yarn: true
-stages:
-- test
-jobs:
-  include:
-  - stage: test
-    install:
-    - yarn
-    script:
-    - yarn test
+  
+script:
+  - yarn test
+
 deploy:
   provider: npm
   email: bulentv@gmail.com
