@@ -15,9 +15,9 @@ beforeEach(() => {
 
 describe('decodeAttendanceData', () => {
   test('when no attendanceParser option is specify it should use the legacy parser', () => {
-    const zk = new ZKLib({ ip: '123', inport: 123 });
+    const zk = new ZKLib({ip: '123', inport: 123});
 
-    const buffer =Buffer.from([]);
+    const buffer = Buffer.from([]);
 
     zk.decodeAttendanceData(buffer);
 
@@ -26,9 +26,9 @@ describe('decodeAttendanceData', () => {
   });
 
   test('when the attendanceParser option is legacy it should use the legacy parser', () => {
-    const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'legacy' });
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'legacy'});
 
-    const buffer =Buffer.from([]);
+    const buffer = Buffer.from([]);
 
     zk.decodeAttendanceData(buffer);
 
@@ -37,7 +37,7 @@ describe('decodeAttendanceData', () => {
   });
 
   test('when the attendanceParser option is v6.60 it should use the v6.60 parser', () => {
-    const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'v6.60' });
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60'});
 
     const buffer = Buffer.from([]);
 
@@ -49,9 +49,10 @@ describe('decodeAttendanceData', () => {
 
   describe('getAttendances', () => {
     test('when send returns an error it should return', done => {
-      const zk = new ZKLib({ ip: '123', inport: 123, attendanceParser: 'v6.60' });
+      const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60'});
 
       zk.data_recv = Buffer.from(new Array(10));
+      zk.socket = dgram.createSocket('udp4');
 
       zk.send = (msg, offset, length, cb) => {
         cb('some error');

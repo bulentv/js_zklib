@@ -27,14 +27,15 @@ module.exports = class {
     }
   }
 
+  /**
+   *
+   * @param {(error: Error, data) => void} [cb]
+   */
   getAttendance(cb) {
-    const command = Commands.ATTLOG_RRQ;
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 
-    const buf = createHeader(command, session_id, reply_id, []);
-
-    this.createSocket();
+    const buf = createHeader(Commands.ATTLOG_RRQ, session_id, reply_id, '');
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
@@ -49,7 +50,13 @@ module.exports = class {
 
     const atts = [];
 
-    this.socket.on('message', (reply, remote) => {
+    const internalCallback = (err, data) => {
+      this.socket.removeListener(this.DATA_EVENT, handleOnData);
+
+      cb(err, data);
+    };
+
+    const handleOnData = (reply, remote) => {
       switch (state) {
         case States.FIRST_PACKET:
           state = States.PACKET;
@@ -60,11 +67,10 @@ module.exports = class {
             total_bytes = this.getSizeAttendance();
 
             if (total_bytes <= 0) {
-              this.closeSocket();
-              cb('zero');
+              internalCallback(new Error('zero'));
             }
           } else {
-            cb('zero length reply');
+            internalCallback(new Error('zero length reply'));
           }
 
           break;
@@ -104,28 +110,37 @@ module.exports = class {
           break;
 
         case States.FINISHED:
-          this.closeSocket();
-          cb(null, atts);
+          internalCallback(null, atts);
           break;
       }
-    });
+    };
+
+    this.socket.on(this.DATA_EVENT, handleOnData);
 
     this.send(buf, 0, buf.length, err => {
       if (err) {
-        cb && cb(err);
+        internalCallback && internalCallback(err);
       }
     });
   }
 
+  /**
+   *
+   * @param {(error: Error) => void} [cb]
+   */
   clearAttendanceLog(cb) {
     return this.executeCmd(Commands.CLEAR_ATTLOG, '', (err, ret) => {
-      if (err || !ret || ret.length < 8) return cb(err);
+      if (err) return cb(err);
 
       return cb(null);
     });
   }
 
-  // Deprecation warnings
+  /**
+   *
+   * @param {(error: Error) => void} [cb]
+   * @deprecated since version 0.2.0. Use getAttendance instead
+   */
   getattendance(cb) {
     console.warn('getattendance() function will deprecated soon, please use getAttendance()');
     return this.getAttendance(cb);

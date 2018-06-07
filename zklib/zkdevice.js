@@ -1,46 +1,21 @@
-const { Commands } = require('./constants');
-
-/**
- *
- * @param {string|Error} err
- * @param {Array} ret
- */
-function checkCmdArgs(err, ret) {
-  return err || !ret || ret.length < 8 ? err || 'response error' : undefined;
-}
+const {Commands} = require('./constants');
 
 module.exports = class {
   /**
    * Enable the device
-   * @param {(err: Error|string) => void} cb
+   * @param {(err: Error) => void} cb
    */
   enableDevice(cb) {
-    this.executeCmd(Commands.ENABLEDEVICE, '', (err, ret) => {
-      const errResult = checkCmdArgs(err, ret);
-
-      if (errResult) {
-        return cb(errResult);
-      }
-
-      return cb();
-    });
+    this.executeCmd(Commands.ENABLE_DEVICE, '', cb);
   }
 
   /**
    * Disable the device
-   * @param {(err: Error|string) => void} cb
+   * @param {(err: Error) => void} cb
    */
   disableDevice(cb) {
-    const buffer = new Buffer([0, 0, 0, 0]);
+    const buffer = Buffer.from([0, 0, 0, 0]);
 
-    this.executeCmd(Commands.DISABLEDEVICE, buffer, (err, ret) => {
-      const errResult = checkCmdArgs(err, ret);
-
-      if (errResult) {
-        return cb(errResult);
-      }
-
-      return cb();
-    });
+    this.executeCmd(Commands.DISABLE_DEVICE, buffer, cb);
   }
 };

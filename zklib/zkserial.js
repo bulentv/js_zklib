@@ -1,13 +1,13 @@
 const dgram = require('dgram');
 
-const { Commands } = require('./constants');
+const {Commands} = require('./constants');
 
 module.exports = class {
   serialNumber(cb) {
     const keyword = '~SerialNumber';
 
     this.executeCmd(Commands.DEVICE, keyword, (err, ret) => {
-      if (err || !ret || ret.length <= 8) {
+      if (err) {
         return cb(err);
       }
 
