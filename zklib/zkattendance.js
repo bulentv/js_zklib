@@ -32,6 +32,8 @@ module.exports = class {
    * @param {(error: Error, data) => void} [cb]
    */
   getAttendance(cb) {
+    console.log('getting attendances...');
+
     const session_id = this.session_id;
     const reply_id = this.data_recv.readUInt16LE(6);
 

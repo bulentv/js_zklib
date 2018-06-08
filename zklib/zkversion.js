@@ -20,8 +20,6 @@ module.exports = class {
         ret
           .slice(8)
           .toString('ascii')
-          .split(/\u0000/)
-          .shift()
           .replace(keyword + '=', '')
       );
     });

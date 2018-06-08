@@ -42,7 +42,7 @@ class ZkUser {
         .slice(49, 72)
         .toString('ascii')
         .split('\0')
-        .shift()
+        .shift(),
     };
 
     return user;
@@ -224,7 +224,7 @@ class ZkUser {
   /**
    * @deprecated since version 0.2.0. Use setUser instead
    */
-  setuser(uid, password = '', name = '', user_id = '', cb) {
+  setuser(uid, password = '', name = '', user_id, cb) {
     console.warn('setuser() function will deprecated soon, please use setUser()');
     return this.setUser(uid, password, name, user_id, cb);
   }

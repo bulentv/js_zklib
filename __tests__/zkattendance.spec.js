@@ -65,3 +65,17 @@ describe('decodeAttendanceData', () => {
     });
   });
 });
+
+describe('getattendance', () => {
+  test('should call getAttendance', () => {
+    const zk = new ZKLib({ip: '123', inport: 123});
+
+    zk.getAttendance = jest.fn();
+
+    const callback = jest.fn();
+
+    zk.getattendance(callback);
+
+    expect(zk.getAttendance).toBeCalledWith(callback);
+  });
+});

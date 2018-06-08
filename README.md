@@ -45,6 +45,7 @@ ZK.connect(function(err) {
 | inport           | yes      | number                |          |
 | timeout          | -        | number                | -        |
 | attendanceParser | -        | [ 'legacy', 'v6.60' ] | 'legacy' |
+| connectionType   | -        | [ 'udp', 'tcp' ]      | 'udp'    |
 
 ## API
 

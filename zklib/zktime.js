@@ -23,10 +23,10 @@ module.exports = class {
    * @param {(error: Error) => void} [cb]
    */
   setTime(dateTime, cb) {
-    const command_string = Buffer.alloc(4);
-    command_string.writeUInt32LE(timeParser.encode(dateTime), 0);
+    const buf = Buffer.alloc(4);
+    buf.writeUInt32LE(timeParser.encode(dateTime), 0);
 
-    this.executeCmd(Commands.SET_TIME, command_string, cb);
+    this.executeCmd(Commands.SET_TIME, buf, cb);
   }
 
   /**
@@ -41,11 +41,12 @@ module.exports = class {
 
   /**
    *
+   * @param {Date} dateTime
    * @param {(error: Error) => void} [cb]
    * @deprecated since version 0.2.0. Use setTime instead
    */
-  settime(cb) {
+  settime(dateTime, cb) {
     console.warn('settime() function will deprecated soon, please use setTime()');
-    return this.setTime(cb);
+    return this.setTime(dateTime, cb);
   }
 };

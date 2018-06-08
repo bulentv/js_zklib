@@ -5,7 +5,8 @@
   "main": "zklib/zklib.js",
   "scripts": {
     "test": "jest",
-    "test:w": "yarn test --watch"
+    "test:w": "yarn test --watch",
+    "test:cov": "yarn test --coverage"
   },
   "repository": {
     "type": "git",
@@ -39,12 +40,13 @@
     "shasum": "e03fc9bddcf11d2fe881f5b77249faf81865341d",
     "tarball": "http://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz"
   },
-  "maintainers": [
-    {
-      "name": "bulentv",
-      "email": "bulentv@gmail.com"
-    }
-  ],
+  "maintainers": [{
+    "name": "bulentv",
+    "email": "bulentv@gmail.com"
+  }, {
+    "name": "mribichich",
+    "email": "guli4073@gmail.com"
+  }],
   "directories": {},
   "_resolved": "https://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz",
   "dependencies": {
