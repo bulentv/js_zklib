@@ -85,7 +85,7 @@ describe('getAttendances', () => {
     });
   });
 
-  test('when udp should parse data with one message', () => {
+  test('when udp should parse data with two message', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60'});
 
     zk.socket = dgram.createSocket('udp4');
@@ -125,7 +125,7 @@ describe('getAttendances', () => {
     expect(callback).toBeCalledWith(null, [attBuf1, attBuf2, attBuf3]);
   });
 
-  test('when udp should parse data with more than one message', () => {
+  test('when udp should parse data with more than two message', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60'});
 
     zk.socket = dgram.createSocket('udp4');
@@ -162,7 +162,7 @@ describe('getAttendances', () => {
     expect(callback).toBeCalledWith(null, [attBuf1, attBuf2]);
   });
 
-  test('when udp should parse data with more than one message with partial data', () => {
+  test('when udp should parse data with more than two message with partial data', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60'});
 
     zk.socket = dgram.createSocket('udp4');
@@ -203,7 +203,7 @@ describe('getAttendances', () => {
     expect(callback).toBeCalledWith(null, [attBuf1, Buffer.from([...attBuf2Part1, ...attBuf2Part2]), attBuf3]);
   });
 
-  test('when tcp should parse data with one message', () => {
+  test('when tcp should parse data with two message', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
 
     zk.socket = new net.Socket();
@@ -248,7 +248,7 @@ describe('getAttendances', () => {
     expect(callback).toBeCalledWith(null, [attBuf1, attBuf2, attBuf3]);
   });
 
-  test('when tcp should parse data with more than one message', () => {
+  test('when tcp should parse data with more than two message', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
 
     zk.socket = new net.Socket();
@@ -286,7 +286,7 @@ describe('getAttendances', () => {
     expect(callback).toBeCalledWith(null, [attBuf1, attBuf2, attBuf3]);
   });
 
-  test('when tcp should parse data with more than one message with partial data', () => {
+  test('when tcp should parse data with more than two message with partial data', () => {
     const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
 
     zk.socket = new net.Socket();
@@ -325,6 +325,50 @@ describe('getAttendances', () => {
     zk.getAttendance(callback);
 
     expect(callback).toBeCalledWith(null, [attBuf1, Buffer.from([...attBuf2Part1, ...attBuf2Part2]), attBuf3]);
+  });
+
+  test('when tcp should parse data with one message', () => {
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
+
+    zk.socket = new net.Socket();
+
+    let handleOnCallback;
+
+    zk.socket.on = jest.fn((event, cb) => {
+      handleOnCallback = cb;
+    });
+
+    const attBuf1 = hexStringToBuffer(
+      '000006023232000000000000000000000000000000000000000000000f82672d2300000000000000'
+    );
+    const attBuf2 = hexStringToBuffer(
+      '000007023232000000000000000000000000000000000000000000000f01822d2300000000000000'
+    );
+    const attBuf3 = hexStringToBuffer(
+      '000008023232000000000000000000000000000000000000000000000f40203a2300000000000000'
+    );
+
+    zk.send = jest.fn(() => {
+      handleOnCallback(
+        Buffer.from([
+          ...hexStringToBuffer('5050827d10000000' + 'dc05ab13526702007c00000000040000'),
+          ...hexStringToBuffer('5050827d949a0000' + 'dd05ae2b000002007c00'),
+          ...attBuf1,
+          ...attBuf2,
+          ...attBuf3,
+          0x00,
+          0x00,
+        ])
+      );
+    });
+
+    attendanceV660Parser.parse = jest.fn(data => data);
+
+    const callback = jest.fn();
+
+    zk.getAttendance(callback);
+
+    expect(callback).toBeCalledWith(null, [attBuf1, attBuf2, attBuf3]);
   });
 });
 

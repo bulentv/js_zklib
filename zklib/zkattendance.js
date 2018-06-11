@@ -36,8 +36,6 @@ module.exports = class {
    * @param {(error: Error, data) => void} [cb]
    */
   getAttendance(cb) {
-    console.log('getting attendances...');
-
     this.reply_id++;
 
     const buf = createHeader(Commands.ATTLOG_RRQ, this.session_id, this.reply_id, '', this.connectionType);
@@ -66,12 +64,7 @@ module.exports = class {
      * @param {Buffer} reply
      */
     const handleOnData = reply => {
-      console.log('<-- msg: ', reply.length);
-      // console.log(reply.toString('hex'));
-
       reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
-
-      console.log('<-- msg after header: ', reply.length);
 
       switch (state) {
         case States.FIRST_PACKET:
@@ -80,13 +73,18 @@ module.exports = class {
           if (reply && reply.length) {
             // total_bytes = getSizeAttendance(reply);
             total_bytes = reply.readUInt32LE(8);
-            console.log('<-- total_bytes: ', total_bytes);
 
             if (total_bytes <= 0) {
               internalCallback(new Error('zero'));
+              return;
+            }
+
+            if (reply.length > 16) {
+              handleOnData(reply.slice(16));
             }
           } else {
             internalCallback(new Error('zero length reply'));
+            return;
           }
 
           break;
@@ -126,8 +124,6 @@ module.exports = class {
 
           rem = Buffer.alloc(reply.length - offset);
           reply.copy(rem, 0, offset);
-
-          console.log('rem: ', rem.length);
 
           break;
 
