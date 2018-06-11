@@ -19,7 +19,7 @@ module.exports = class {
 
       this.executeCmd(Commands.CONNECT, '', err => {
         if (err) {
-          // this.closeSocket();
+          this.closeSocket();
 
           cb(err);
 
