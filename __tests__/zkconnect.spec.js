@@ -40,6 +40,7 @@ describe('connect', () => {
     const zk = new ZKLib({ip: '123', inport: 123});
 
     zk.createSocket = jest.fn(cb => cb());
+    zk.closeSocket = jest.fn();
     zk.executeCmd = jest.fn((command, data, cb) => cb(new Error('some')));
 
     const mainCallback = jest.fn();
@@ -48,6 +49,7 @@ describe('connect', () => {
 
     expect(zk.createSocket).toBeCalled();
     expect(zk.executeCmd).toBeCalled();
+    expect(zk.closeSocket).toBeCalled();
     expect(mainCallback).toBeCalledWith(new Error('some'));
   });
 });
