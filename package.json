@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "test:w": "yarn test --watch",
-    "test:cov": "yarn test --coverage"
+    "test:cov": "yarn test --coverage",
+    "test:w:cov": "yarn test:w --coverage"
   },
   "repository": {
     "type": "git",
