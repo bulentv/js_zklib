@@ -10,11 +10,12 @@ exports.defaultTo = (value, defaultValue) => {
  * @param {number} session_id
  * @param {number} reply_id
  * @param {string | Uint8Array | Buffer} data
+ * @param {string | Uint8Array | Buffer} [prefix]
  * @returns {Buffer}
  */
-exports.createHeader = (command, session_id, reply_id, data) => {
+exports.createHeader = (command, session_id, reply_id, data, prefix) => {
   const dataBuffer = Buffer.from(data);
-  const buf = new Buffer(8 + dataBuffer.length);
+  const buf = Buffer.alloc(8 + dataBuffer.length);
 
   buf.writeUInt16LE(command, 0);
   buf.writeUInt16LE(0, 2);
@@ -29,7 +30,19 @@ exports.createHeader = (command, session_id, reply_id, data) => {
   reply_id = (reply_id + 1) % USHRT_MAX;
   buf.writeUInt16LE(reply_id, 6);
 
-  return buf;
+  if (!prefix || prefix === 'udp') {
+    return buf;
+  }
+
+  if (prefix === 'tcp') {
+    const prefixBuf = Buffer.from([0x50, 0x50, 0x82, 0x7d, 0x08, 0x00, 0x00, 0x00]);
+
+    return Buffer.concat([prefixBuf, buf]);
+  }
+
+  const prefixBuf = Buffer.from(prefix);
+
+  return Buffer.concat([prefixBuf, buf]);
 };
 
 /**
@@ -65,4 +78,36 @@ exports.createChkSum = createChkSum;
 exports.checkValid = buf => {
   const command = buf.readUInt16LE(0);
   return command == Commands.ACK_OK;
+};
+
+/**
+ *
+ * @param {Buffer} buf
+ * @returns {Buffer}
+ */
+exports.removeTcpHeader = buf => {
+  if (buf.length < 8) {
+    return buf;
+  }
+
+  if (buf.compare(Buffer.from([0x50, 0x50, 0x82, 0x7d]), 0, 4, 0, 4) !== 0) {
+    return buf;
+  }
+
+  return buf.slice(8);
+};
+
+/**
+ *
+ * @param {string} hexString
+ * @returns {Buffer}
+ */
+exports.hexStringToBuffer = hexString => {
+  const buf = [];
+
+  for (let i = 0; i < hexString.length; i += 2) {
+    buf.push(parseInt(hexString.substr(i, 2), 16));
+  }
+
+  return Buffer.from(buf);
 };
