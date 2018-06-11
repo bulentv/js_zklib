@@ -122,21 +122,15 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   createUdpSocket(port, cb) {
-    console.log('creating socket UDP...');
-
     const socket = dgram.createSocket('udp4');
 
     socket.once('error', err => {
-      console.log(`socket error:\n${err.stack}`);
-
       socket.close();
 
       cb(err);
     });
 
     socket.once('listening', () => {
-      console.log('listening UDP...');
-
       cb();
     });
 
@@ -150,21 +144,15 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   createTcpSocket(cb) {
-    console.log('creating socket TCP...');
-
     const socket = new net.Socket();
 
     socket.once('error', err => {
-      console.log(`socket error:\n${err.stack}`);
-
       socket.end();
 
       cb(err);
     });
 
     socket.once('connect', () => {
-      console.log('listening TCP...');
-
       cb();
     });
 
@@ -204,8 +192,6 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   writeUdpSocket(socket, msg, offset, length, cb) {
-    console.log('sending UDP...');
-
     socket.once(this.DATA_EVENT, () => {
       this.sendTimeoutId && clearTimeout(this.sendTimeoutId);
 
@@ -220,8 +206,6 @@ class ZKLib {
 
       if (this.timeout) {
         this.sendTimeoutId = setTimeout(() => {
-          console.log('timeout UDP...');
-
           cb && cb(new Error('Timeout error'));
         }, this.timeout);
       }
@@ -237,8 +221,6 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   writeTcpSocket(socket, msg, offset, length, cb) {
-    console.log('sending TCP...');
-
     socket.once(this.DATA_EVENT, () => {
       socket.removeListener('timeout', handleOnTimeout);
 
@@ -246,8 +228,6 @@ class ZKLib {
     });
 
     const handleOnTimeout = () => {
-      console.log('timeout TCP...');
-
       cb && cb(new Error('Timeout error'));
     };
 
@@ -274,8 +254,6 @@ class ZKLib {
    * @param {dgram.Socket} socket
    */
   closeUdpSocket(socket) {
-    console.log('closing socket UDP...');
-
     socket.removeAllListeners('message');
     socket.close();
   }
@@ -285,8 +263,6 @@ class ZKLib {
    * @param {net.Socket} socket
    */
   closeTcpSocket(socket) {
-    console.log('closing socket TCP...');
-
     socket.removeAllListeners('data');
     socket.end();
   }

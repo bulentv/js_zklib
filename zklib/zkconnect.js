@@ -8,8 +8,6 @@ module.exports = class {
    * @param {(error: Error) => void} [cb]
    */
   connect(cb) {
-    console.log('connecting...');
-
     this.createSocket(err => {
       if (err) {
         cb(err);
@@ -26,8 +24,6 @@ module.exports = class {
           return;
         }
 
-        console.log('connected');
-
         cb();
       });
     });
@@ -38,14 +34,8 @@ module.exports = class {
    * @param {(error: Error) => void} [cb]
    */
   disconnect(cb) {
-    console.log('disconnecting...');
-
     this.executeCmd(Commands.EXIT, '', err => {
       this.closeSocket();
-
-      // console.log('listenerCount: ', this.socket.listenerCount(this.DATA_EVENT));
-
-      console.log('disconnected');
 
       cb(err);
     });
