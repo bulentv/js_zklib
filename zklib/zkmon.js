@@ -7,7 +7,7 @@ module.exports = class {
   decodeAttLog(buf) {
     const ret = {
       userid: parseInt(buf.slice(8, 11).toString('ascii')),
-      timestamp: new Date(2000 + buf[34], buf[35] - 1, buf[36], buf[37], buf[38], buf[39]).getTime()
+      timestamp: new Date(2000 + buf[34], buf[35] - 1, buf[36], buf[37], buf[38], buf[39]).getTime(),
     };
 
     return ret;
@@ -23,9 +23,6 @@ module.exports = class {
     //   this.createSocket();
 
     this.socket.on('message', ret => {
-      this.session_id = ret.readUInt16LE(4);
-      this.reply_id = ret.readUInt16LE(6);
-
       if (opts.onatt && ret.length == 40) {
         opts.onatt(null, this.decodeAttLog(ret));
       }
