@@ -8,6 +8,26 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+describe('constructor', () => {
+  test('when no connectionType is specify, it should assign DATA_EVENT to message', () => {
+    const ZK = new ZKLib({ip: '12', inport: 1});
+
+    expect(ZK.DATA_EVENT).toBe('message');
+  });
+
+  test('when connectionType is UDP it should assign DATA_EVENT to message', () => {
+    const ZK = new ZKLib({ip: '12', inport: 1, connectionType: 'udp'});
+
+    expect(ZK.DATA_EVENT).toBe('message');
+  });
+
+  test('when connectionType is TCP it should assign DATA_EVENT to data', () => {
+    const ZK = new ZKLib({ip: '12', inport: 1, connectionType: 'tcp'});
+
+    expect(ZK.DATA_EVENT).toBe('data');
+  });
+});
+
 describe('options validation', () => {
   test('when no options are specify should throw error', () => {
     const create = () => {
