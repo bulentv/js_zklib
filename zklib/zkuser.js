@@ -1,24 +1,28 @@
 const dgram = require('dgram');
 
-const {Commands, States} = require('./constants');
-const {createHeader, checkValid} = require('./utils');
+const {Commands, States, ConnectionTypes} = require('./constants');
+const {createHeader, checkValid, removeTcpHeader} = require('./utils');
+
+// /**
+//  *
+//  * @param {Buffer} data
+//  */
+// function getSizeUser(data) {
+//   const command = data.readUInt16LE(0);
+
+//   if (command == Commands.PREPARE_DATA) {
+//     const size = data.readUInt32LE(8);
+//     return size;
+//   } else {
+//     return 0;
+//   }
+// }
 
 /**
  *
  * @extends ZKLib
  */
 class ZkUser {
-  getSizeUser() {
-    const command = this.data_recv.readUInt16LE(0);
-
-    if (command == Commands.PREPARE_DATA) {
-      const size = this.data_recv.readUInt32LE(8);
-      return size;
-    } else {
-      return 0;
-    }
-  }
-
   /**
    *
    * @param {Buffer} userdata
@@ -102,24 +106,23 @@ class ZkUser {
    * @param {(err: Error, users: object[]) => void} cb
    */
   getUser(cb) {
-    const command_string = Buffer.from([0x05]);
+    const reqData = Buffer.from([0x05]);
 
-    const session_id = this.session_id;
-    const reply_id = this.data_recv.readUInt16LE(6);
+    this.reply_id++;
 
-    const buf = createHeader(Commands.USERTEMP_RRQ, session_id, reply_id, command_string);
-
-    // this.createSocket();
+    const buf = createHeader(Commands.USERTEMP_RRQ, this.session_id, this.reply_id, reqData, this.connectionType);
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
     let bytes_recv = 0;
+
     let rem = Buffer.from([]);
     let offset = 0;
 
     const userdata_size = 72;
     const trim_first = 11;
-    const trim_others = 8;
+    const trim_others = this.connectionType === ConnectionTypes.UDP ? 8 : 0;
+
     const users = [];
 
     const internalCallback = (err, data) => {
@@ -128,25 +131,32 @@ class ZkUser {
       cb(err, data);
     };
 
-    const handleOnData = (reply, remote) => {
+    /**
+     *
+     * @param {Buffer} reply
+     */
+    const handleOnData = reply => {
+      reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+
       switch (state) {
         case States.FIRST_PACKET:
           state = States.PACKET;
 
-          this.data_recv = reply;
-
           if (reply && reply.length) {
-            this.session_id = reply.readUInt16LE(4);
-
-            total_bytes = this.getSizeUser();
+            // total_bytes = getSizeUser(reply);
+            total_bytes = reply.readUInt32LE(8);
 
             if (total_bytes <= 0) {
-              // this.closeSocket();
+              internalCallback(new Error('no data'));
+              return;
+            }
 
-              return internalCallback(new Error('no data'));
+            if (reply.length > 16) {
+              handleOnData(reply.slice(16));
             }
           } else {
             internalCallback(new Error('zero length reply'));
+            return;
           }
 
           break;
@@ -160,7 +170,7 @@ class ZkUser {
           }
 
           while (reply.length + rem.length - offset >= userdata_size) {
-            const userdata = new Buffer(userdata_size);
+            const userdata = Buffer.alloc(userdata_size);
 
             if (rem.length > 0) {
               rem.copy(userdata);
@@ -178,21 +188,22 @@ class ZkUser {
             bytes_recv += userdata_size;
 
             if (bytes_recv == total_bytes) {
-              state = States.FINISHED;
+              // state = States.FINISHED;
+
+              internalCallback(null, users);
+              return;
             }
           }
 
-          rem = new Buffer(reply.length - offset);
+          rem = Buffer.alloc(reply.length - offset);
           reply.copy(rem, 0, offset);
 
           break;
 
-        case States.FINISHED:
-          // this.closeSocket();
+        // case States.FINISHED:
+        //   internalCallback(null, users);
 
-          internalCallback(null, users);
-
-          break;
+        //   break;
       }
     };
 
