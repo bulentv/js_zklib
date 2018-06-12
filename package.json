@@ -1,6 +1,6 @@
 {
   "name": "zklib",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Attendance Machine Library for NodeJS with a connection to the network using the UDP protocol and port 4370",
   "main": "zklib/zklib.js",
   "scripts": {
@@ -41,13 +41,16 @@
     "shasum": "e03fc9bddcf11d2fe881f5b77249faf81865341d",
     "tarball": "http://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz"
   },
-  "maintainers": [{
-    "name": "bulentv",
-    "email": "bulentv@gmail.com"
-  }, {
-    "name": "mribichich",
-    "email": "guli4073@gmail.com"
-  }],
+  "maintainers": [
+    {
+      "name": "bulentv",
+      "email": "bulentv@gmail.com"
+    },
+    {
+      "name": "mribichich",
+      "email": "guli4073@gmail.com"
+    }
+  ],
   "directories": {},
   "_resolved": "https://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz",
   "dependencies": {
