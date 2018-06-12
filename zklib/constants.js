@@ -38,18 +38,23 @@ exports.Commands = Object.freeze({
   TZ_RRQ: 27,
   TZ_WRQ: 28,
   UNLOCK: 31,
-  REG_EVENT: 500 // Register the Event
+  REG_EVENT: 500, // Register the Event
 });
 
 exports.Levels = Object.freeze({
   USER: 0,
-  ADMIN: 14
+  ADMIN: 14,
 });
 
 exports.States = Object.freeze({
   FIRST_PACKET: 1,
   PACKET: 2,
-  FINISHED: 3
+  FINISHED: 3,
 });
 
 exports.USHRT_MAX = 65535;
+
+exports.ConnectionTypes = Object.freeze({
+  UDP: 'udp',
+  TCP: 'tcp',
+});

@@ -1,10 +1,11 @@
 const dgram = require('dgram');
+var net = require('net');
 
 const mixin = require('./mixin');
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
-const {defaultTo, createHeader, checkValid} = require('./utils');
-const {Commands, USHRT_MAX} = require('./constants');
+const {defaultTo, createHeader, checkValid, removeTcpHeader} = require('./utils');
+const {Commands, USHRT_MAX, ConnectionTypes} = require('./constants');
 
 /**
   @typedef Options
@@ -14,6 +15,7 @@ const {Commands, USHRT_MAX} = require('./constants');
   @property {number} inport - Socket port to bind to
   @property {number} [timeout] - Zk device port
   @property {string} [attendanceParser] - Zk device port
+  @property {string} [connectionType] - Connection type UDP/TCP
  */
 
 /**
@@ -22,8 +24,9 @@ const {Commands, USHRT_MAX} = require('./constants');
   @property {number} inport - Socket port to bind to
   @property {number} [timeout] - Zk device port
   @property {string} [attendanceParser] - Zk device port
+  @property {string} [connectionType] - Connection type UDP/TCP
   @property {('message' | 'data')} DATA_EVENT
-  @property {dgram.Socket} socket
+  @property {dgram.Socket | net.Socket} socket
  */
 class ZKLib {
   /**
@@ -37,15 +40,9 @@ class ZKLib {
     this.inport = options.inport;
     this.timeout = options.timeout;
     this.attendanceParser = defaultTo(options.attendanceParser, attParserLegacy.name);
+    this.connectionType = defaultTo(options.connectionType, ConnectionTypes.UDP);
 
-    this.DATA_EVENT = 'message';
-
-    this.socket = null;
-
-    this.reply_id = -1 + USHRT_MAX;
-
-    this.data_recv = '';
-    this.session_id = 0;
+    this.DATA_EVENT = this.connectionType === ConnectionTypes.UDP ? 'message' : 'data';
   }
 
   validateOptions(options) {
@@ -64,6 +61,10 @@ class ZKLib {
     if (options.attendanceParser && ![attParserLegacy.name, attParserV660.name].includes(options.attendanceParser)) {
       throw new Error('Attendance parser option unknown');
     }
+
+    if (options.connectionType && ![ConnectionTypes.UDP, ConnectionTypes.TCP].includes(options.connectionType)) {
+      throw new Error('Connection type option unknown');
+    }
   }
 
   /**
@@ -73,24 +74,22 @@ class ZKLib {
    * @param {*} cb
    */
   executeCmd(command, data, cb) {
-    if (command == Commands.CONNECT) {
-      this.reply_id = -1 + USHRT_MAX;
+    if (command === Commands.CONNECT) {
+      this.session_id = 0;
+      this.reply_id = 0;
+    } else {
+      this.reply_id++;
     }
 
-    const buf = createHeader(command, this.session_id, this.reply_id, data);
-
-    // this.createSocket();
+    const buf = createHeader(command, this.session_id, this.reply_id, data, this.connectionType);
 
     const handleOnData = (reply, remote) => {
-      // this.closeSocket();
-
-      // this.socket.removeListener(this.DATA_EVENT, handleOnData);
-
-      this.data_recv = reply;
+      reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
 
       if (reply && reply.length && reply.length >= 8) {
-        this.session_id = reply.readUInt16LE(4);
-        this.reply_id = reply.readUInt16LE(6);
+        if (command === Commands.CONNECT) {
+          this.session_id = reply.readUInt16LE(4);
+        }
 
         cb && cb(checkValid(reply) ? null : new Error('Invalid request'), reply);
       } else {
@@ -113,7 +112,8 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   createSocket(cb) {
-    this.socket = this.createUdpSocket(this.inport, cb);
+    this.socket =
+      this.connectionType === ConnectionTypes.UDP ? this.createUdpSocket(this.inport, cb) : this.createTcpSocket(cb);
   }
 
   /**
@@ -130,11 +130,40 @@ class ZKLib {
       cb(err);
     });
 
-    socket.on('listening', () => {
+    socket.once('listening', () => {
       cb();
     });
 
     socket.bind(port);
+
+    return socket;
+  }
+
+  /**
+   *
+   * @param {(error: Error) => void} [cb]
+   */
+  createTcpSocket(cb) {
+    const socket = new net.Socket();
+
+    socket.once('error', err => {
+      socket.end();
+
+      cb(err);
+    });
+
+    socket.once('connect', () => {
+      cb();
+    });
+
+    if (this.timeout) {
+      socket.setTimeout(this.timeout);
+    }
+
+    socket.connect(
+      this.port,
+      this.ip
+    );
 
     return socket;
   }
@@ -147,7 +176,11 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   send(msg, offset, length, cb) {
-    this.writeUdpSocket(this.socket, msg, offset, length, cb);
+    if (this.connectionType === ConnectionTypes.UDP) {
+      this.writeUdpSocket(this.socket, msg, offset, length, cb);
+    } else {
+      this.writeTcpSocket(this.socket, msg, offset, length, cb);
+    }
   }
 
   /**
@@ -159,13 +192,11 @@ class ZKLib {
    * @param {(error: Error) => void} [cb]
    */
   writeUdpSocket(socket, msg, offset, length, cb) {
-    const handleOnData = () => {
+    socket.once(this.DATA_EVENT, () => {
       this.sendTimeoutId && clearTimeout(this.sendTimeoutId);
 
       cb();
-    };
-
-    socket.once(this.DATA_EVENT, handleOnData);
+    });
 
     socket.send(msg, offset, length, this.port, this.ip, err => {
       if (err) {
@@ -175,16 +206,47 @@ class ZKLib {
 
       if (this.timeout) {
         this.sendTimeoutId = setTimeout(() => {
-          // this.closeSocket();
-
           cb && cb(new Error('Timeout error'));
         }, this.timeout);
       }
     });
   }
 
+  /**
+   *
+   * @param {net.Socket} socket
+   * @param {String | Uint8Array | Buffer} msg
+   * @param {number} offset
+   * @param {number} length
+   * @param {(error: Error) => void} [cb]
+   */
+  writeTcpSocket(socket, msg, offset, length, cb) {
+    socket.once(this.DATA_EVENT, () => {
+      socket.removeListener('timeout', handleOnTimeout);
+
+      cb();
+    });
+
+    const handleOnTimeout = () => {
+      cb && cb(new Error('Timeout error'));
+    };
+
+    socket.once('timeout', handleOnTimeout);
+
+    socket.write(msg, null, err => {
+      if (err) {
+        cb && cb(err);
+        return;
+      }
+    });
+  }
+
   closeSocket() {
-    this.closeUdpSocket(this.socket);
+    if (this.connectionType === ConnectionTypes.UDP) {
+      this.closeUdpSocket(this.socket);
+    } else {
+      this.closeTcpSocket(this.socket);
+    }
   }
 
   /**
@@ -194,6 +256,15 @@ class ZKLib {
   closeUdpSocket(socket) {
     socket.removeAllListeners('message');
     socket.close();
+  }
+
+  /**
+   *
+   * @param {net.Socket} socket
+   */
+  closeTcpSocket(socket) {
+    socket.removeAllListeners('data');
+    socket.end();
   }
 }
 

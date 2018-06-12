@@ -17,7 +17,7 @@ ZK = new ZKLib({
   ip: '192.168.5.11',
   port: 4370,
   inport: 5200,
-  timeout: 5000
+  timeout: 5000,
 });
 
 // connect to access control device
@@ -45,6 +45,9 @@ ZK.connect(function(err) {
 | inport           | yes      | number                |          |
 | timeout          | -        | number                | -        |
 | attendanceParser | -        | [ 'legacy', 'v6.60' ] | 'legacy' |
+| connectionType   | -        | [ 'udp', 'tcp' ]      | 'udp'    |
+
+Currently only `getAttendance` was tested with TCP
 
 ## API
 

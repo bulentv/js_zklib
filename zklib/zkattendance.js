@@ -2,20 +2,24 @@ const dgram = require('dgram');
 
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
-const {Commands, States} = require('./constants');
-const {createHeader} = require('./utils');
+const {Commands, States, ConnectionTypes} = require('./constants');
+const {createHeader, removeTcpHeader} = require('./utils');
+
+// /**
+//  *
+//  * @param {Buffer} data
+//  */
+// function getSizeAttendance(data) {
+//   const command = data.readUInt16LE(0);
+
+//   if (command == Commands.PREPARE_DATA) {
+//     return data.readUInt32LE(8);
+//   } else {
+//     return 0;
+//   }
+// }
 
 module.exports = class {
-  getSizeAttendance() {
-    const command = this.data_recv.readUInt16LE(0);
-
-    if (command == Commands.PREPARE_DATA) {
-      return this.data_recv.readUInt32LE(8);
-    } else {
-      return 0;
-    }
-  }
-
   decodeAttendanceData(attdata) {
     switch (this.attendanceParser) {
       case attParserV660.name:
@@ -32,10 +36,9 @@ module.exports = class {
    * @param {(error: Error, data) => void} [cb]
    */
   getAttendance(cb) {
-    const session_id = this.session_id;
-    const reply_id = this.data_recv.readUInt16LE(6);
+    this.reply_id++;
 
-    const buf = createHeader(Commands.ATTLOG_RRQ, session_id, reply_id, '');
+    const buf = createHeader(Commands.ATTLOG_RRQ, this.session_id, this.reply_id, '', this.connectionType);
 
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
@@ -46,7 +49,7 @@ module.exports = class {
 
     const attdata_size = 40;
     const trim_first = 10;
-    const trim_others = 8;
+    const trim_others = this.connectionType === ConnectionTypes.UDP ? 8 : 0;
 
     const atts = [];
 
@@ -56,21 +59,32 @@ module.exports = class {
       cb(err, data);
     };
 
-    const handleOnData = (reply, remote) => {
+    /**
+     *
+     * @param {Buffer} reply
+     */
+    const handleOnData = reply => {
+      reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+
       switch (state) {
         case States.FIRST_PACKET:
           state = States.PACKET;
-          this.data_recv = reply;
 
           if (reply && reply.length) {
-            this.session_id = reply.readUInt16LE(4);
-            total_bytes = this.getSizeAttendance();
+            // total_bytes = getSizeAttendance(reply);
+            total_bytes = reply.readUInt32LE(8);
 
             if (total_bytes <= 0) {
               internalCallback(new Error('zero'));
+              return;
+            }
+
+            if (reply.length > 16) {
+              handleOnData(reply.slice(16));
             }
           } else {
             internalCallback(new Error('zero length reply'));
+            return;
           }
 
           break;
@@ -84,7 +98,8 @@ module.exports = class {
           }
 
           while (reply.length + rem.length - offset >= attdata_size) {
-            const attdata = new Buffer(attdata_size);
+            const attdata = Buffer.alloc(attdata_size);
+
             if (rem.length > 0) {
               rem.copy(attdata);
               reply.copy(attdata, rem.length, offset);
@@ -100,18 +115,21 @@ module.exports = class {
 
             bytes_recv += attdata_size;
             if (bytes_recv == total_bytes) {
-              state = States.FINISHED;
+              // state = States.FINISHED;
+
+              internalCallback(null, atts);
+              return;
             }
           }
 
-          rem = new Buffer(reply.length - offset);
+          rem = Buffer.alloc(reply.length - offset);
           reply.copy(rem, 0, offset);
 
           break;
 
-        case States.FINISHED:
-          internalCallback(null, atts);
-          break;
+        // case States.FINISHED:
+        //   internalCallback(null, atts);
+        //   break;
       }
     };
 
