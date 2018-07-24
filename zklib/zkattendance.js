@@ -1,23 +1,7 @@
-const dgram = require('dgram');
-
 const attParserLegacy = require('./att_parser_legacy');
 const attParserV660 = require('./att_parser_v6.60');
 const {Commands, States, ConnectionTypes} = require('./constants');
 const {createHeader, removeTcpHeader} = require('./utils');
-
-// /**
-//  *
-//  * @param {Buffer} data
-//  */
-// function getSizeAttendance(data) {
-//   const command = data.readUInt16LE(0);
-
-//   if (command == Commands.PREPARE_DATA) {
-//     return data.readUInt32LE(8);
-//   } else {
-//     return 0;
-//   }
-// }
 
 module.exports = class {
   decodeAttendanceData(attdata) {
@@ -40,18 +24,13 @@ module.exports = class {
 
     const buf = createHeader(Commands.ATTLOG_RRQ, this.session_id, this.reply_id, '', this.connectionType);
 
+    const ATTDATA_SIZE = 40;
+    const TRIM_FIRST = 10;
+    const TRIM_NEXT = this.connectionType === ConnectionTypes.UDP ? 8 : 0;
+
     let state = States.FIRST_PACKET;
     let total_bytes = 0;
-    let bytes_recv = 0;
-
-    let rem = Buffer.from([]);
-    let offset = 0;
-
-    const attdata_size = 40;
-    const trim_first = 10;
-    const trim_others = this.connectionType === ConnectionTypes.UDP ? 8 : 0;
-
-    const atts = [];
+    let attendancesBuffer = Buffer.from([]);
 
     const internalCallback = (err, data) => {
       this.socket.removeListener(this.DATA_EVENT, handleOnData);
@@ -64,15 +43,17 @@ module.exports = class {
      * @param {Buffer} reply
      */
     const handleOnData = reply => {
-      reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+      // reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
 
       switch (state) {
         case States.FIRST_PACKET:
           state = States.PACKET;
 
+          reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+
           if (reply && reply.length) {
-            // total_bytes = getSizeAttendance(reply);
-            total_bytes = reply.readUInt32LE(8);
+            total_bytes = reply.readUInt32LE(8) - 4;
+            total_bytes += 2;
 
             if (total_bytes <= 0) {
               internalCallback(new Error('zero'));
@@ -90,46 +71,30 @@ module.exports = class {
           break;
 
         case States.PACKET:
-          if (bytes_recv == 0) {
-            offset = trim_first;
-            bytes_recv = 4;
+          if (attendancesBuffer.length == 0) {
+            reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+            reply = reply.slice(TRIM_FIRST);
           } else {
-            offset = trim_others;
+            reply = reply.slice(TRIM_NEXT);
           }
 
-          while (reply.length + rem.length - offset >= attdata_size) {
-            const attdata = Buffer.alloc(attdata_size);
+          reply = removeHeadersInMiddle(reply);
 
-            if (rem.length > 0) {
-              rem.copy(attdata);
-              reply.copy(attdata, rem.length, offset);
-              offset += attdata_size - rem.length;
-              rem = Buffer.from([]);
-            } else {
-              reply.copy(attdata, 0, offset);
-              offset += attdata_size;
+          attendancesBuffer = Buffer.concat([attendancesBuffer, reply]);
+
+          if (attendancesBuffer.length === total_bytes) {
+            const atts = [];
+
+            for (let i = 0; i < attendancesBuffer.length - 2; i += ATTDATA_SIZE) {
+              const att = this.decodeAttendanceData(attendancesBuffer.slice(i, i + ATTDATA_SIZE));
+              atts.push(att);
             }
 
-            const att = this.decodeAttendanceData(attdata);
-            atts.push(att);
-
-            bytes_recv += attdata_size;
-            if (bytes_recv == total_bytes) {
-              // state = States.FINISHED;
-
-              internalCallback(null, atts);
-              return;
-            }
+            internalCallback(null, atts);
+            return;
           }
-
-          rem = Buffer.alloc(reply.length - offset);
-          reply.copy(rem, 0, offset);
 
           break;
-
-        // case States.FINISHED:
-        //   internalCallback(null, atts);
-        //   break;
       }
     };
 
@@ -144,7 +109,7 @@ module.exports = class {
 
   /**
    *
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   clearAttendanceLog(cb) {
     return this.executeCmd(Commands.CLEAR_ATTLOG, '', (err, ret) => {
@@ -164,3 +129,19 @@ module.exports = class {
     return this.getAttendance(cb);
   }
 };
+
+function removeHeadersInMiddle(reply) {
+  let buf = Buffer.from(reply);
+
+  while (true) {
+    const headerIndex = buf.indexOf(Buffer.from([0x50, 0x50, 0x82, 0x7d]));
+
+    if (headerIndex === -1) {
+      break;
+    }
+
+    buf = Buffer.from([...buf.slice(0, headerIndex), ...buf.slice(headerIndex + 16)]);
+  }
+
+  return buf;
+}

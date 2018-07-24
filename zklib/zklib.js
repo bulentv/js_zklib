@@ -8,14 +8,13 @@ const {defaultTo, createHeader, checkValid, removeTcpHeader} = require('./utils'
 const {Commands, USHRT_MAX, ConnectionTypes} = require('./constants');
 
 /**
-  @typedef Options
-  @type {object}
+  @typedef {object} Options
   @property {string} ip - Zk device ipAddress
-  @property {number} [port] - Zk device port
+  @property {?number} [port] - Zk device port
   @property {number} inport - Socket port to bind to
-  @property {number} [timeout] - Zk device port
-  @property {string} [attendanceParser] - Zk device port
-  @property {string} [connectionType] - Connection type UDP/TCP
+  @property {?number} [timeout] - Zk device port
+  @property {?string} [attendanceParser] - Zk device port
+  @property {?string} [connectionType] - Connection type UDP/TCP
  */
 
 /**
@@ -119,7 +118,7 @@ class ZKLib {
   /**
    *
    * @param {number} port
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   createUdpSocket(port, cb) {
     const socket = dgram.createSocket('udp4');
@@ -141,7 +140,7 @@ class ZKLib {
 
   /**
    *
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   createTcpSocket(cb) {
     const socket = new net.Socket();
@@ -189,7 +188,7 @@ class ZKLib {
    * @param {String | Uint8Array | Buffer} msg
    * @param {number} offset
    * @param {number} length
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   writeUdpSocket(socket, msg, offset, length, cb) {
     socket.once(this.DATA_EVENT, () => {
@@ -218,7 +217,7 @@ class ZKLib {
    * @param {String | Uint8Array | Buffer} msg
    * @param {number} offset
    * @param {number} length
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   writeTcpSocket(socket, msg, offset, length, cb) {
     socket.once(this.DATA_EVENT, () => {

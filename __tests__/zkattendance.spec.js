@@ -370,6 +370,48 @@ describe('getAttendances', () => {
 
     expect(callback).toBeCalledWith(null, [attBuf1, attBuf2, attBuf3]);
   });
+
+  test('when tcp should parse data with more than two messages and a header in the middle', () => {
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
+
+    zk.socket = new net.Socket();
+
+    let handleOnCallback;
+
+    zk.socket.on = jest.fn((event, cb) => {
+      handleOnCallback = cb;
+    });
+
+    const attBuf1 = hexStringToBuffer(
+      '000006023232000000000000000000000000000000000000000000000f82672d2300000000000000'
+    );
+    const attBuf2Partial1 = hexStringToBuffer('0000070232320000000000000000000000000000');
+    const attBuf2Partial2 = hexStringToBuffer('00000000000000000f01822d2300000000000000');
+    const attBuf2 = Buffer.from([
+      ...attBuf2Partial1,
+      ...hexStringToBuffer('5050827d949a0000' + 'dd05717f00000200'),
+      ...attBuf2Partial2,
+    ]);
+    const attBuf3 = hexStringToBuffer(
+      '000008023232000000000000000000000000000000000000000000000f01822d2300000000000000'
+    );
+
+    zk.send = jest.fn(() => {
+      handleOnCallback(hexStringToBuffer('5050827d10000000' + 'dc05ab13526702007c00000000040000'));
+
+      handleOnCallback(Buffer.from([...hexStringToBuffer('5050827d949a0000' + 'dd05717f000002007c00'), ...attBuf1]));
+      handleOnCallback(attBuf2);
+      handleOnCallback(Buffer.from([...attBuf3, 0x00, 0x00]));
+    });
+
+    attendanceV660Parser.parse = jest.fn(data => data);
+
+    const callback = jest.fn();
+
+    zk.getAttendance(callback);
+
+    expect(callback).toBeCalledWith(null, [attBuf1, Buffer.from([...attBuf2Partial1, ...attBuf2Partial2]), attBuf3]);
+  });
 });
 
 describe('getattendance', () => {
