@@ -5,7 +5,7 @@ const {Commands} = require('./constants');
 module.exports = class {
   /**
    *
-   * @param {(error: Error) => void} [cb]
+   * @param {(error?: Error) => void} [cb]
    */
   connect(cb) {
     this.createSocket(err => {
