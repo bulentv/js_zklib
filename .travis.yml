@@ -1,19 +1,15 @@
 language: node_js
-
 node_js:
 - node
-
 cache:
   yarn: true
-  
 script:
-  - yarn test
-
+- yarn test
 deploy:
   provider: npm
   email: bulentv@gmail.com
   api_key:
-    secure: HlSfNsmmb4Hsz+7D5XwNFlrQE6WF8cD+lAqNo8FO4ign3ZeaAO5AFeQCCS4HcYHJwLknxLIpU5tdKNKYsmwS44cdqoLu5kpcUXhUSzgvQ07hsCVFOpbyY5b4FQerO0jYhMqsi7ha+ZW0ofjO1wsilIbDamtQsIi6dA+ZIJwgGzGftp59Ja9ep3MQK/SJnBcV1sld+Ohn25VN9IiixbpPeIw2KEFBoSQcwuA6/Jcp+A6YoVdp0AxG8m61GhREbmQX7p9b7S/lHN4hJkr4qIufl+/0sn3Y07ZP+bq5BLTnH5WXKWoKQeh+MNhbYJXaC1447a5Ol6wmKyePMS9OtZpfVVLk9y/vIsAvopq2dSTqL6Be62BCxNnVikdh7brC/KTHn2GCXUg7hZQT8Fe0YnNLDi8D0uzjPfzMnnb7xkbP8QhCsECrntBOpnpJjzoAsUCrROdlM5bMximtgKJshXaYb99ZGvYSXSyhOomRxVBCnj9SWgatHkWNL5kq4XnzBoUs3c/YHkWdqnMK1wXUYou4ePDrKutr9rSDOkAMJ6IbIMh3bz/adprEsQEq0SlM+819bpvPNIjzsTt9KvPAmrRB76ZsqlsBRtPezsHh4VQ93XOoNFWEj/rMFik2/4uDvAhiJ2gyGAKcm0Zbbi6qfXNDdBL48t5vrOT/jrvSXNpoAS8=
+    secure: FIdwCVjrP5ybw9M/r3Rx17nE1jTttRxXCLcdLU0TIn3dKFLQ7BaRh48Y0N9jAcxJswV5ArAAqrOOnvj4INMb7aFuaaNyju4JT4J5oAODloRI8rSOIOIbxusrC1RKiw3WRjn9eqIUnv2nShYvuF3Ib/P+YjrQgbAZvjRJZTkFPwBlDuBPFD9mTZ0W/YqhKeEzGnQ/OFYa9gbjF6olN5CtKgkZ4UJ4z2/FkYg79o/VGH3hj2TgoQc2peHv+Ih1rEK+isnpPNAVfwfkwXOBz2+W8F59FQGbgKeal0/25Ko/Upn//rUN+ZK/vm0r1dPYdPCIRJWwcqr+znT226RRNzapfzOKPWV4CIjrYAKkY4/yUuOW2+qd5m5wd3Ihpx1Dal8EOd6iD7lnvSC8w1iRqzBJJwv/1F0FZWe9fAxNOPqPAmNQ3p2xMGUBTHZVHGRjOG4zln7fydvYiYjE7m2xUbyMh3p/6H2HBJS9B49xItgRohKP7+zY8XzUzr/S9uV5f1mN6xdOA/77v9m0TZYHiuraB8okX/OwJodSAXowFFJrbjNMB+Ixdpia/h7Xex11lAuULuXGfrLX/owthe3kkPLT1gA0u4TiWYM1J9mUelHiwGtCRmMHiJOxgu04hhMJYc0LBavsRyhPlL/dggfUBGqc/V6JgdtIEdfe79hyai6GF/4=
   on:
     tags: true
     repo: bulentv/js_zklib
