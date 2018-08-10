@@ -51,8 +51,9 @@ module.exports = class {
 
           reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
 
-          if (reply && reply.length) {
-            total_bytes = reply.readUInt32LE(8) - 4;
+          var offset = 8;
+          if (reply && offset <= reply.length - 4) {
+            total_bytes = reply.readUInt32LE(offset) - 4;
             total_bytes += 2;
 
             if (total_bytes <= 0) {
