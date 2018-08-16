@@ -77,7 +77,9 @@ exports.createChkSum = createChkSum;
  */
 exports.checkValid = buf => {
   const command = buf.readUInt16LE(0);
-  return command == Commands.ACK_OK;
+
+  // ACK_OK_2 (2005) is used in another firmware 6.60 from 2017
+  return command == Commands.ACK_OK || command == Commands.ACK_OK_2;
 };
 
 /**

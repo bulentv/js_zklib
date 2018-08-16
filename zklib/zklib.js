@@ -83,6 +83,8 @@ class ZKLib {
     const buf = createHeader(command, this.session_id, this.reply_id, data, this.connectionType);
 
     const handleOnData = (reply, remote) => {
+      // console.log(reply.toString('hex'));
+
       reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
 
       if (reply && reply.length && reply.length >= 8) {
@@ -97,6 +99,8 @@ class ZKLib {
     };
 
     this.socket.once(this.DATA_EVENT, handleOnData);
+
+    // console.log(buf.toString('hex'));
 
     this.send(buf, 0, buf.length, err => {
       if (err) {
