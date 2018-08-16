@@ -43,7 +43,7 @@ module.exports = class {
      * @param {Buffer} reply
      */
     const handleOnData = reply => {
-      // reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
+      // console.log(reply.toString('hex'));
 
       switch (state) {
         case States.FIRST_PACKET:
@@ -52,6 +52,13 @@ module.exports = class {
           reply = this.connectionType === ConnectionTypes.UDP ? reply : removeTcpHeader(reply);
 
           if (reply && reply.length) {
+            const cmd = reply.readUInt16LE(0);
+
+            if (cmd == Commands.ACK_ERROR) {
+              internalCallback(new Error('ack error'));
+              return;
+            }
+
             total_bytes = reply.readUInt32LE(8) - 4;
             total_bytes += 2;
 

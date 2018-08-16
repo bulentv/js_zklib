@@ -92,6 +92,10 @@ describe('checkValid', () => {
     expect(checkValid(Buffer.from([0xd0, 0x07, 0x00, 0x00]))).toEqual(true);
   });
 
+  test('should return is valid', () => {
+    expect(checkValid(Buffer.from([0xd5, 0x07, 0x00, 0x00]))).toEqual(true);
+  });
+
   test('should return is invalid', () => {
     expect(checkValid(Buffer.from([0x0d, 0x00, 0x00, 0x00]))).toEqual(false);
   });

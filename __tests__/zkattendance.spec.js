@@ -412,6 +412,54 @@ describe('getAttendances', () => {
 
     expect(callback).toBeCalledWith(null, [attBuf1, Buffer.from([...attBuf2Partial1, ...attBuf2Partial2]), attBuf3]);
   });
+
+  test('when udp when there are no attendances to download should throw an ack error', () => {
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'udp'});
+
+    zk.socket = new net.Socket();
+
+    let handleOnCallback;
+
+    zk.socket.on = jest.fn((event, cb) => {
+      handleOnCallback = cb;
+    });
+
+    zk.send = jest.fn(() => {
+      handleOnCallback(Buffer.from([...hexStringToBuffer('d1072cf800000200')]));
+    });
+
+    attendanceV660Parser.parse = jest.fn(data => data);
+
+    const callback = jest.fn();
+
+    zk.getAttendance(callback);
+
+    expect(callback).toBeCalledWith(new Error('ack error'), undefined);
+  });
+
+  test('when tcp when there are no attendances to download should throw an ack error', () => {
+    const zk = new ZKLib({ip: '123', inport: 123, attendanceParser: 'v6.60', connectionType: 'tcp'});
+
+    zk.socket = new net.Socket();
+
+    let handleOnCallback;
+
+    zk.socket.on = jest.fn((event, cb) => {
+      handleOnCallback = cb;
+    });
+
+    zk.send = jest.fn(() => {
+      handleOnCallback(Buffer.from([...hexStringToBuffer('5050827d08000000d1072cf800000200')]));
+    });
+
+    attendanceV660Parser.parse = jest.fn(data => data);
+
+    const callback = jest.fn();
+
+    zk.getAttendance(callback);
+
+    expect(callback).toBeCalledWith(new Error('ack error'), undefined);
+  });
 });
 
 describe('getattendance', () => {

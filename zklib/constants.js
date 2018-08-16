@@ -19,6 +19,7 @@ exports.Commands = Object.freeze({
   ACK_OK: 2000,
   ACK_ERROR: 2001,
   ACK_DATA: 2002,
+  ACK_OK_2: 2005,
   PREPARE_DATA: 1500,
   DATA: 1501,
   FREE_DATA: 1502, // Clear machine opened buffer
