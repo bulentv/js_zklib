@@ -195,8 +195,10 @@ class ZKLib {
    * @param {(error?: Error) => void} [cb]
    */
   writeUdpSocket(socket, msg, offset, length, cb) {
+    let sendTimeoutId;
+
     socket.once(this.DATA_EVENT, () => {
-      this.sendTimeoutId && clearTimeout(this.sendTimeoutId);
+      sendTimeoutId && clearTimeout(sendTimeoutId);
 
       cb();
     });
@@ -208,7 +210,7 @@ class ZKLib {
       }
 
       if (this.timeout) {
-        this.sendTimeoutId = setTimeout(() => {
+        sendTimeoutId = setTimeout(() => {
           cb && cb(new Error('Timeout error'));
         }, this.timeout);
       }

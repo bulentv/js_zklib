@@ -10,7 +10,7 @@ module.exports = class {
   connect(cb) {
     this.createSocket(err => {
       if (err) {
-        cb(err);
+        cb && cb(err);
 
         return;
       }
@@ -19,12 +19,12 @@ module.exports = class {
         if (err) {
           this.closeSocket();
 
-          cb(err);
+          cb && cb(err);
 
           return;
         }
 
-        cb();
+        cb && cb();
       });
     });
   }
@@ -37,7 +37,7 @@ module.exports = class {
     this.executeCmd(Commands.EXIT, '', err => {
       this.closeSocket();
 
-      cb(err);
+      cb && cb(err);
     });
   }
 };
