@@ -35,7 +35,7 @@ module.exports = class {
     const internalCallback = (err, data) => {
       this.socket.removeListener(this.DATA_EVENT, handleOnData);
 
-      cb(err, data);
+      cb && cb(err, data);
     };
 
     /**
@@ -89,6 +89,8 @@ module.exports = class {
 
           attendancesBuffer = Buffer.concat([attendancesBuffer, reply]);
 
+          // TODO: if sizes are not the same we should throw an error. rigth know if they not match it simple hangs
+
           if (attendancesBuffer.length === total_bytes) {
             const atts = [];
 
@@ -109,7 +111,7 @@ module.exports = class {
 
     this.send(buf, 0, buf.length, err => {
       if (err) {
-        internalCallback && internalCallback(err);
+        internalCallback(err);
       }
     });
   }
