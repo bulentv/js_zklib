@@ -59,12 +59,18 @@ module.exports = class {
               return;
             }
 
-            total_bytes = reply.readUInt32LE(8) - 4;
-            total_bytes += 2;
-
-            if (total_bytes <= 0) {
+              try{
+              total_bytes = reply.readUInt32LE(8) - 4;
+              total_bytes += 2;
+  
+              if (total_bytes <= 0) {
+  
+                internalCallback(new Error('zero'));
+                return;
+              }
+            }catch(err){
               internalCallback(new Error('zero'));
-              return;
+                return;
             }
 
             if (reply.length > 16) {
