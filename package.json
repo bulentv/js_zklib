@@ -54,7 +54,7 @@
   "directories": {},
   "_resolved": "https://registry.npmjs.org/zklib/-/zklib-0.0.7.tgz",
   "dependencies": {
-    "async": "^2.6.0"
+    "async": "^3.2.2"
   },
   "devDependencies": {
     "@types/node": "^10.3.1",
